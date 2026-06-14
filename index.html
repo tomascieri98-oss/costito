@@ -242,6 +242,10 @@
     * { -webkit-print-color-adjust:exact; print-color-adjust:exact }
   }
 
+  .mixta-grid{grid-template-columns:1fr 1fr}
+  @media(max-width:520px){.mixta-grid{grid-template-columns:1fr}.mixta-res-grid{grid-template-columns:1fr!important}}
+  .iva-btn{padding:5px 12px;border:1px solid #e0e0d8;border-radius:6px;background:#fff;cursor:pointer;font-size:12px;color:#666;font-family:inherit;transition:all .15s}
+  .iva-btn.active{background:#1D9E75;border-color:#1D9E75;color:#fff;font-weight:600}
   .prod-cat-tag{display:inline-block;font-size:10px;background:#f0f0e8;color:#888;border-radius:4px;padding:1px 6px;margin-left:4px;vertical-align:middle}
   .prods-toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
   .toolbar-btn{padding:7px 12px;border:1px solid #e0e0d8;border-radius:8px;background:#fff;cursor:pointer;font-size:12px;color:#555;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:5px}
@@ -359,6 +363,7 @@
     <button class="tab" onclick="showTab('conv')">Markup vs margen</button>
     <button class="tab" onclick="showTab('serv')">Precio de servicio</button>
     <button class="tab" onclick="showTab('medios')">Medios de pago</button>
+    <button class="tab" onclick="showTab('mixta')">Compra mixta</button>
     <button class="tab" id="tab-btn-prods" onclick="showTab('prods')" style="display:none">Mis productos</button>
   </div>
 
@@ -527,6 +532,84 @@
         <button class="pdf-btn" onclick="exportarPDFMedios()" style="margin-top:0">Exportar lista de precios en PDF</button>
       </div>
     </div>
+
+  </div>
+
+  <!-- TAB: COMPRA MIXTA -->
+  <div id="tab-mixta" class="panel">
+
+    <div class="card">
+      <div class="section-title">Compra mixta: blanco + negro</div>
+      <p style="font-size:13px;color:#666;margin-bottom:20px;line-height:1.5">Calculá el costo real cuando comprás una parte con factura (con IVA) y otra en efectivo sin factura. Ideal para comercios que compran a mayoristas que facturan solo una parte.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" class="mixta-grid">
+
+        <!-- Blanco -->
+        <div style="background:#f8f8f4;border-radius:10px;padding:16px;border:1px solid #e8e8e0">
+          <div style="font-size:13px;font-weight:700;color:#085041;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+            <span style="background:#085041;color:#fff;border-radius:4px;padding:1px 7px;font-size:11px">EN BLANCO</span> Con factura
+          </div>
+          <div class="field-row" style="margin-bottom:10px">
+            <label class="field-label">Precio en la factura</label>
+            <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="mx-precio-blanco" placeholder="ej: 5000" oninput="calcMixta()"></div>
+          </div>
+          <div class="field-row" style="margin-bottom:10px">
+            <label class="field-label">¿El precio de la factura ya tiene IVA?</label>
+            <div style="display:flex;gap:8px;margin-top:6px">
+              <button class="iva-btn active" id="mx-iva-si" onclick="setMxtIva('si')">Sí, tiene IVA</button>
+              <button class="iva-btn" id="mx-iva-no" onclick="setMxtIva('no')">No, es neto</button>
+            </div>
+            <div id="mx-iva-wrap" style="margin-top:8px;display:flex;gap:8px">
+              <button class="iva-btn active" id="mx-iva-21" onclick="setMxtIvaTasa('21')">IVA 21%</button>
+              <button class="iva-btn" id="mx-iva-105" onclick="setMxtIvaTasa('105')">IVA 10.5%</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <label class="field-label">Unidades</label>
+            <div class="input-wrap"><span class="input-prefix">#</span><input type="number" id="mx-uds-blanco" placeholder="ej: 50" oninput="calcMixta()" min="0"></div>
+          </div>
+        </div>
+
+        <!-- Negro -->
+        <div style="background:#f8f8f4;border-radius:10px;padding:16px;border:1px solid #e8e8e0">
+          <div style="font-size:13px;font-weight:700;color:#555;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+            <span style="background:#555;color:#fff;border-radius:4px;padding:1px 7px;font-size:11px">EN NEGRO</span> Sin factura
+          </div>
+          <div class="field-row" style="margin-bottom:10px">
+            <label class="field-label">Precio que pagás en mano</label>
+            <div class="input-wrap"><span class="input-prefix">$</span><input type="number" id="mx-precio-negro" placeholder="ej: 4500" oninput="calcMixta()"></div>
+          </div>
+          <div class="field-hint" style="margin-bottom:10px">El precio en negro no tiene IVA — es costo directo.</div>
+          <div class="field-row">
+            <label class="field-label">Unidades</label>
+            <div class="input-wrap"><span class="input-prefix">#</span><input type="number" id="mx-uds-negro" placeholder="ej: 50" oninput="calcMixta()" min="0"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="mixta-resultado" style="display:none">
+      <div class="card" style="background:linear-gradient(135deg,#085041,#1D9E75);border:none">
+        <div style="color:#5DCAA5;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Costo promedio por unidad</div>
+        <div id="mx-costo-promedio" style="font-size:36px;font-weight:800;color:#fff;margin-bottom:16px">—</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px" class="mixta-res-grid">
+          <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:12px">
+            <div style="font-size:11px;color:#a8e6cf;margin-bottom:4px">Costo blanco c/IVA</div>
+            <div id="mx-res-blanco" style="font-size:15px;font-weight:700;color:#fff">—</div>
+          </div>
+          <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:12px">
+            <div style="font-size:11px;color:#a8e6cf;margin-bottom:4px">Costo negro</div>
+            <div id="mx-res-negro" style="font-size:15px;font-weight:700;color:#fff">—</div>
+          </div>
+          <div style="background:rgba(255,255,255,.1);border-radius:8px;padding:12px">
+            <div style="font-size:11px;color:#a8e6cf;margin-bottom:4px">Total unidades</div>
+            <div id="mx-res-uds" style="font-size:15px;font-weight:700;color:#fff">—</div>
+          </div>
+        </div>
+        <button onclick="usarCostoMixto()" style="margin-top:16px;width:100%;padding:11px;background:#fff;color:#085041;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Usar este costo en la calculadora →</button>
+      </div>
+    </div>
+    <div class="error-msg" id="error-mixta" style="display:none">Completá precios y unidades de ambas partes para ver el resultado.</div>
 
   </div>
 
@@ -1220,7 +1303,7 @@ function showTab(id){
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
-  const tabMap = {calc:0, import:1, conv:2, serv:3, medios:4, prods:5};
+  const tabMap = {calc:0, import:1, conv:2, serv:3, medios:4, mixta:5, prods:6};
   const tabs = document.querySelectorAll('.tab');
   if(tabMap[id] !== undefined && tabs[tabMap[id]]) tabs[tabMap[id]].classList.add('active');
 }
@@ -1321,6 +1404,64 @@ function renderMedios(){
 }
 
 function calcMedios(){ renderMedios(); }
+
+// ── COMPRA MIXTA ──────────────────────────────────────────────────────────
+let mxtIvaIncluido = 'si';
+let mxtIvaTasa = '21';
+let mxtCostoPromedio = 0;
+
+function setMxtIva(v){
+  mxtIvaIncluido = v;
+  document.getElementById('mx-iva-si').classList.toggle('active', v==='si');
+  document.getElementById('mx-iva-no').classList.toggle('active', v==='no');
+  document.getElementById('mx-iva-wrap').style.display = v==='no' ? 'flex' : 'none';
+  calcMixta();
+}
+
+function setMxtIvaTasa(v){
+  mxtIvaTasa = v;
+  document.getElementById('mx-iva-21').classList.toggle('active', v==='21');
+  document.getElementById('mx-iva-105').classList.toggle('active', v==='105');
+  calcMixta();
+}
+
+function calcMixta(){
+  const precioBlanco = parseFloat(document.getElementById('mx-precio-blanco').value);
+  const udsBlanco    = parseFloat(document.getElementById('mx-uds-blanco').value);
+  const precioNegro  = parseFloat(document.getElementById('mx-precio-negro').value);
+  const udsNegro     = parseFloat(document.getElementById('mx-uds-negro').value);
+  const err = document.getElementById('error-mixta');
+  const res = document.getElementById('mixta-resultado');
+
+  if(!precioBlanco || !udsBlanco || !precioNegro || !udsNegro || udsBlanco<=0 || udsNegro<=0){
+    err.style.display = 'block'; res.style.display = 'none'; return;
+  }
+  err.style.display = 'none';
+
+  // Costo real del blanco (con IVA siempre — si ya lo tiene, directo; si no, sumarlo)
+  const tasa = mxtIvaTasa === '21' ? 0.21 : 0.105;
+  const costoBlanco = mxtIvaIncluido === 'si' ? precioBlanco : precioBlanco * (1 + tasa);
+
+  const totalBlanco = costoBlanco * udsBlanco;
+  const totalNegro  = precioNegro * udsNegro;
+  const totalUds    = udsBlanco + udsNegro;
+  const promedio    = (totalBlanco + totalNegro) / totalUds;
+
+  mxtCostoPromedio = promedio;
+  document.getElementById('mx-costo-promedio').textContent = fmt(promedio);
+  document.getElementById('mx-res-blanco').textContent = fmt(costoBlanco) + ' c/u';
+  document.getElementById('mx-res-negro').textContent   = fmt(precioNegro) + ' c/u';
+  document.getElementById('mx-res-uds').textContent     = totalUds + ' unidades';
+  res.style.display = 'block';
+}
+
+function usarCostoMixto(){
+  if(!mxtCostoPromedio) return;
+  document.getElementById('costo').value = mxtCostoPromedio.toFixed(2);
+  setIvaCosto('no'); // el costo mixto ya tiene IVA absorbido
+  showTab('calc');
+  calcular();
+}
 
 // ── CALCULADORA DE SERVICIOS ──────────────────────────────────────────────
 let gastoItems = [
