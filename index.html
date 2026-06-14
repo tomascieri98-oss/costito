@@ -910,7 +910,7 @@ async function sendMagicLink(){
   const btn = document.getElementById('auth-btn');
   if(!email){ showAuthMsg('Ingresá tu email.', 'err'); return; }
   btn.disabled = true; btn.textContent = 'Enviando...';
-  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: window.location.origin } });
   btn.disabled = false; btn.textContent = 'Enviar link de acceso';
   if(error) showAuthMsg('Error: ' + error.message, 'err');
   else showAuthMsg('¡Listo! Revisá tu email y hacé clic en el link para entrar.', 'ok');
