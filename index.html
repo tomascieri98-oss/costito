@@ -74,6 +74,15 @@
 
 <div class="wrap">
 
+  <!-- Cotización del dólar (en vivo, solo visible en modo USD) -->
+  <div class="dolar-bar" id="dolarBar" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    <span class="db-label">Dólar</span>
+    <select id="dolarTipo" aria-label="Tipo de dólar"></select>
+    <b class="db-val" id="dolarVal">—</b>
+    <span class="db-fecha" id="dolarFecha"></span>
+  </div>
+
   <!-- ============ CALCULADORA ============ -->
   <section class="panel on" id="calc">
     <h2 class="section-title">¿A cuánto lo vendés?</h2>

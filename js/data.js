@@ -10,8 +10,22 @@ const COSTITO_DATA = {
   // Fecha visible en la UI para que el usuario sepa qué tan vigentes son los datos
   comisionesActualizadas: 'junio 2026',
 
-  // Cotización de referencia USD→ARS (editable; idealmente se actualiza luego)
-  cotizacionUSD: 1075,
+  // Cotización del dólar. El VALOR viene en vivo de la API (no se edita a mano);
+  // el cliente solo elige QUÉ dólar usar. Una sola llamada trae todas las casas.
+  dolar: {
+    endpoint: 'https://dolarapi.com/v1/dolares',
+    valor: 'venta',        // usamos el precio de venta para convertir
+    tipoDefault: 'blue',
+    fallback: 1500,        // valor de emergencia si la API no responde
+    tipos: [
+      { id: 'oficial',   nombre: 'Oficial' },
+      { id: 'blue',      nombre: 'Blue' },
+      { id: 'bolsa',     nombre: 'MEP / Bolsa' },
+      { id: 'mayorista', nombre: 'Mayorista' },
+      { id: 'tarjeta',   nombre: 'Tarjeta' },
+      { id: 'cripto',    nombre: 'Cripto' },
+    ],
+  },
 
   // Canales de venta del dropdown principal.
   // com = comisión nominal en %. El IVA sobre la comisión se aplica aparte (checkbox).

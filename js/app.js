@@ -17,19 +17,26 @@
   const setHTML = (el, html) => { el.textContent = ''; el.insertAdjacentHTML('beforeend', html); };
 
   // Claves de localStorage
-  const LS = { theme: 'costito_theme', cur: 'costito_cur', prods: 'costito_productos' };
+  const LS = {
+    theme: 'costito_theme', cur: 'costito_cur', prods: 'costito_productos',
+    dolarTipo: 'costito_dolar_tipo', dolarCache: 'costito_dolar_cache',
+  };
 
   // Estado en memoria
   const state = {
     cur: localStorage.getItem(LS.cur) || 'ARS',
     iva: 21,
     productos: JSON.parse(localStorage.getItem(LS.prods) || '[]'),
+    dolarTipo: localStorage.getItem(LS.dolarTipo) || D.dolar.tipoDefault,
+    dolares: JSON.parse(localStorage.getItem(LS.dolarCache) || 'null'), // { casa: {valor, fecha} }
   };
 
   // ---------- Helpers de formato ----------
   const fmt = (n) => Math.round(n).toLocaleString('es-AR');
   const symbol = () => (state.cur === 'ARS' ? '$' : 'US$');
-  const conv = (ars) => (state.cur === 'ARS' ? ars : ars / D.cotizacionUSD);
+  // Cotización vigente del tipo elegido (de la API); si no hay, el fallback.
+  const getRate = () => (state.dolares && state.dolares[state.dolarTipo] && state.dolares[state.dolarTipo].valor) || D.dolar.fallback;
+  const conv = (ars) => (state.cur === 'ARS' ? ars : ars / getRate());
   const money = (ars) => symbol() + fmt(conv(ars));
 
   function escapeHtml(s) {
@@ -127,6 +134,46 @@
     $('pre1').textContent = symbol();
     $('pre2').textContent = symbol();
     $('finCur').textContent = symbol();
+    $('dolarBar').style.display = state.cur === 'USD' ? 'flex' : 'none';
+    calc(); medios(); renderProds();
+    document.dispatchEvent(new CustomEvent('costito:rerender'));
+  });
+
+  // ============================================================
+  // COTIZACIÓN DEL DÓLAR (en vivo, no editable a mano)
+  // ============================================================
+  function updateDolarBar() {
+    const d = state.dolares && state.dolares[state.dolarTipo];
+    $('dolarVal').textContent = d ? '$' + fmt(d.valor) : '—';
+    if (d && d.fecha) {
+      const f = new Date(d.fecha);
+      $('dolarFecha').textContent = '· actualizado ' +
+        f.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    } else {
+      $('dolarFecha').textContent = state.dolares ? '' : '· sin conexión, valor estimado';
+    }
+  }
+
+  // Trae todas las cotizaciones de la API en una sola llamada y cachea.
+  function fetchDolares() {
+    fetch(D.dolar.endpoint, { cache: 'no-store' })
+      .then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then((list) => {
+        const map = {};
+        list.forEach((d) => { map[d.casa] = { valor: d[D.dolar.valor], fecha: d.fechaActualizacion }; });
+        state.dolares = map;
+        localStorage.setItem(LS.dolarCache, JSON.stringify(map));
+        updateDolarBar();
+        if (state.cur === 'USD') { calc(); medios(); renderProds(); document.dispatchEvent(new CustomEvent('costito:rerender')); }
+      })
+      .catch(() => { updateDolarBar(); }); // si falla, queda el cache o el fallback
+  }
+
+  // El cliente elige QUÉ dólar usar (el valor no se toca a mano)
+  $('dolarTipo').addEventListener('change', function () {
+    state.dolarTipo = this.value;
+    localStorage.setItem(LS.dolarTipo, state.dolarTipo);
+    updateDolarBar();
     calc(); medios(); renderProds();
     document.dispatchEvent(new CustomEvent('costito:rerender'));
   });
@@ -220,6 +267,11 @@
       '<option value="' + p.id + '">' + p.nombre + '</option>'
     ).join(''));
     updateMProcOnlineOptions(false);
+
+    // Tipo de dólar (cotización en vivo)
+    setHTML($('dolarTipo'), D.dolar.tipos
+      .map((t) => '<option value="' + t.id + '"' + (t.id === state.dolarTipo ? ' selected' : '') + '>' + t.nombre + '</option>')
+      .join(''));
 
     $('comDate').textContent = 'Comisiones de ' + D.comisionesActualizadas;
 
@@ -617,7 +669,10 @@
   if (state.cur === 'USD') {
     document.querySelectorAll('#cur button').forEach((x) => x.classList.toggle('on', x.dataset.cur === 'USD'));
     $('pre1').textContent = $('pre2').textContent = $('finCur').textContent = symbol();
+    $('dolarBar').style.display = 'flex';
   }
+  updateDolarBar();   // pinta desde cache al instante
+  fetchDolares();     // y refresca en segundo plano
   calc();
   medios();
   renderProds();

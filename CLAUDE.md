@@ -60,7 +60,7 @@ Los tabs Premium hoy muestran un **gate** (`renderGates` en `app.js`) que explic
 ```javascript
 const COSTITO_DATA = {
   comisionesActualizadas: 'junio 2026',
-  cotizacionUSD: 1075,
+  dolar: { endpoint, valor:'venta', tipoDefault, fallback, tipos:[{id,nombre}] },
   canales: [ {id, name, com, iva} ],     // com = % nominal; iva = si paga IVA sobre comisión
   ivaProveedor: [ {v, label} ],
   iibb: [ {v, label, prov} ],
@@ -68,6 +68,8 @@ const COSTITO_DATA = {
   premium: { whatsapp, mensaje },
 };
 ```
+
+**Cotización del dólar (en vivo):** el valor NO se hardcodea ni se edita a mano. Se trae de la API `dolarapi.com` (gratis, sin key, con CORS) en una sola llamada que cachea las 7 casas en `localStorage`. El cliente solo elige QUÉ dólar usar (blue, oficial, tarjeta, etc.) en la barra que aparece en modo USD; el valor viene de la API. `getRate()` en `app.js` resuelve la cotización vigente; si la API falla, usa el cache o `dolar.fallback`.
 
 ## Fórmulas críticas (`calc.js`)
 
