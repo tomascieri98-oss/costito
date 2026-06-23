@@ -33,6 +33,8 @@
 
   // ---------- Helpers de formato ----------
   const fmt = (n) => Math.round(n).toLocaleString('es-AR');
+  // Parsea números con formato argentino: "10.000,50" → 10000.5
+  const parseNum = (s) => parseFloat(String(s || '').trim().replace(/\./g, '').replace(',', '.')) || 0;
   const symbol = () => (state.cur === 'ARS' ? '$' : 'US$');
   // Cotización vigente del tipo elegido (de la API); si no hay, el fallback.
   const getRate = () => (state.dolares && state.dolares[state.dolarTipo] && state.dolares[state.dolarTipo].valor) || D.dolar.fallback;
@@ -61,7 +63,7 @@
     },
     // Carga un costo (ARS) en la calculadora principal y va a esa tab
     usarComoCosto(ars) {
-      $('costo').value = Math.round(ars);
+      $('costo').value = Math.round(ars).toLocaleString('es-AR');
       document.querySelector('[data-tab="calc"]').click();
       $('costo').dispatchEvent(new Event('input'));
       toast('Costo cargado en la calculadora');
@@ -397,7 +399,7 @@
   }
   function leerInputs() {
     return {
-      costo: $('costo').value,
+      costo: parseNum($('costo').value),
       ivaProveedor: state.iva,
       margen: $('margen').value,
       comEfectiva: Calc.comisionEfectiva(comNominal(), $('ivaCom').checked),
@@ -426,6 +428,8 @@
     $('bIibb').textContent = '– ' + money(r.iibbAmt);
     $('bGan').textContent = '+ ' + money(r.ganancia);
     $('bTotal').textContent = money(r.precio);
+    updateMarkupConv();
+    renderComparacion();
   }
 
   // Eventos de la calculadora
@@ -488,7 +492,17 @@
 
   $('ivaCom').addEventListener('change', calc);
   $('iibb').addEventListener('change', calc);
-  ['costo', 'margen'].forEach((id) => $(id).addEventListener('input', calc));
+  // #costo tiene su listener en bindMoneyInput (init); margen se mantiene acá
+  $('margen').addEventListener('input', calc);
+
+  // Conversor markup ↔ margen
+  $('markupInp').addEventListener('input', () => {
+    const markup = parseFloat($('markupInp').value);
+    if (!isNaN(markup) && markup >= 0) {
+      $('margen').value = Calc.markupAMargen(markup).toFixed(1);
+    }
+    calc();
+  });
 
   // Copiar precio
   $('copyBtn').addEventListener('click', () => {
@@ -507,7 +521,7 @@
   // MEDIOS DE PAGO
   // ============================================================
   function medios() {
-    const base = parseFloat($('base').value) || 0;
+    const base = parseNum($('base').value);
     let items = [];
 
     if (mediosState.tipo === 'local') {
@@ -742,7 +756,7 @@
   // PDF FORMATEADO — Medios de pago
   // ============================================================
   function printMediosPdf() {
-    const base = parseFloat($('base').value) || 0;
+    const base = parseNum($('base').value);
     const date = new Date().toLocaleDateString('es-AR');
     let sectionsHtml = '';
 
@@ -805,6 +819,46 @@
     abrirVentanaPdf(html);
   }
 
+  // ============================================================
+  // CONVERSOR MARKUP ↔ MARGEN
+  // ============================================================
+  function updateMarkupConv() {
+    const margen = parseFloat($('margen').value) || 0;
+    if (margen <= 0 || margen >= 100) {
+      if (document.activeElement !== $('markupInp')) $('markupInp').value = '';
+      $('convMult').textContent = '—× el costo';
+      return;
+    }
+    const markup = Calc.margenAMarkup(margen);
+    const mult = 1 + markup / 100;
+    if (document.activeElement !== $('markupInp')) {
+      $('markupInp').value = markup.toFixed(1);
+    }
+    $('convMult').textContent = mult.toFixed(2).replace('.', ',') + '× el costo';
+  }
+
+  // ============================================================
+  // COMPARATIVA DE CANALES
+  // ============================================================
+  function renderComparacion() {
+    const ins = leerInputs();
+    let prevGrupo = null;
+    setHTML($('compRows'), COMPARACION.map((item) => {
+      let header = '';
+      if (item.grupo !== prevGrupo) {
+        prevGrupo = item.grupo;
+        header = '<tr class="comp-group"><td colspan="3">' + item.grupo + '</td></tr>';
+      }
+      const r = Calc.precioPublicado({ ...ins, comEfectiva: item.comEfectiva });
+      if (!r.ok) return header + '<tr><td>' + item.nombre + '</td><td colspan="2">—</td></tr>';
+      const lossClass = r.ganancia < 0 ? ' class="comp-loss"' : '';
+      return header +
+        '<tr><td>' + item.nombre + '</td>' +
+        '<td class="comp-price">' + money(r.precio) + '</td>' +
+        '<td class="comp-price' + (r.ganancia < 0 ? ' comp-loss' : '') + '">' + money(r.ganancia) + '</td></tr>';
+    }).join(''));
+  }
+
   function abrirVentanaPdf(html) {
     const w = window.open('', '_blank', 'width=740,height=820');
     if (!w) return toast('Activá las ventanas emergentes para guardar el PDF');
@@ -842,6 +896,25 @@
     const badge = $('comStale');
     if (badge) badge.style.display = days > meta.alertThresholdDays ? 'inline-flex' : 'none';
   }
+
+  // Formateo automático de campos de monto al perder el foco
+  function bindMoneyInput(id, onInput) {
+    const el = $(id);
+    el.addEventListener('blur', () => {
+      const v = parseNum(el.value);
+      el.value = v > 0 ? v.toLocaleString('es-AR') : '';
+    });
+    el.addEventListener('focus', () => {
+      const v = parseNum(el.value);
+      if (v > 0) el.value = String(v);
+    });
+    if (onInput) el.addEventListener('input', onInput);
+  }
+  bindMoneyInput('costo', calc);
+  bindMoneyInput('base', medios);
+  // Valores iniciales con formato
+  $('costo').value = (10000).toLocaleString('es-AR');
+  $('base').value = (20000).toLocaleString('es-AR');
 
   buildControls();
   checkComisionesStale();

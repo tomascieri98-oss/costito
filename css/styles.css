@@ -385,3 +385,23 @@ select.in-bare{cursor:pointer;-webkit-appearance:none;appearance:none}
   .tbl .reca{display:none}
   nav{top:63px}
 }
+
+/* ---------- CONVERSOR MARKUP ↔ MARGEN ---------- */
+.conv-row{display:flex;align-items:center;gap:10px;margin:6px 0 2px;
+  background:var(--crema);border-radius:10px;padding:8px 10px}
+.conv-in{flex:1;min-width:0;margin:0}
+.conv-mult{font-size:13px;color:var(--verde);font-weight:600;white-space:nowrap}
+
+/* ---------- COMPARATIVA DE CANALES ---------- */
+.comp-card{margin-top:16px}
+.comp-summary{cursor:pointer;list-style:none;user-select:none}
+.comp-summary::-webkit-details-marker,.comp-summary::marker{display:none}
+.comp-chev{width:18px;height:18px;color:var(--tinta-soft);margin-left:auto;flex:0 0 auto;
+  transition:transform .2s}
+details[open] .comp-chev{transform:rotate(180deg)}
+.comp-tbl{margin-top:10px}
+.comp-tbl th:last-child,.comp-tbl td.comp-price{text-align:right}
+.comp-tbl td.comp-price{font-weight:700;color:var(--verde);white-space:nowrap}
+.comp-tbl td.comp-loss{color:var(--naranja)!important}
+.comp-group td{background:var(--crema);color:var(--tinta-soft);font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.6px;padding:6px 10px!important;border:none}

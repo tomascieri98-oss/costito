@@ -96,7 +96,7 @@
 
       <div class="field">
         <label>¿Cuánto te costó? <span class="help"><span class="q">?</span><span class="tip">El precio que pagaste al proveedor, sin contar el IVA. Si te facturan con IVA, poné el neto.</span></span></label>
-        <div class="in"><span class="pre" id="pre1">$</span><input type="number" id="costo" value="10000" min="0" inputmode="decimal" placeholder="Ej: 10000" /></div>
+        <div class="in"><span class="pre" id="pre1">$</span><input type="text" id="costo" inputmode="numeric" placeholder="Ej: 10.000" /></div>
       </div>
 
       <div class="field">
@@ -107,6 +107,10 @@
       <div class="field">
         <label>¿Cuánto querés ganar? <span class="help"><span class="q">?</span><span class="tip">Tu margen sobre el precio final de venta. Si ponés 40%, de cada $100 que vendés, $40 quedan para vos (antes de comisiones).</span></span></label>
         <div class="in"><input type="number" id="margen" value="40" min="0" max="95" inputmode="decimal" placeholder="Ej: 40" /><span class="suf">% de margen</span></div>
+      </div>
+      <div class="conv-row" id="convRow">
+        <div class="in conv-in"><input type="number" id="markupInp" min="0" max="9999" step="0.1" inputmode="decimal" placeholder="markup" /><span class="suf">% markup</span></div>
+        <div class="conv-mult" id="convMult">—× el costo</div>
       </div>
     </div>
 
@@ -193,6 +197,19 @@
         Guardar en mis productos
       </button>
     </div>
+
+    <!-- COMPARATIVA DE CANALES -->
+    <details class="card comp-card" id="compCard">
+      <summary class="card-h comp-summary">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>
+        <div><h3>Comparativa de canales</h3><p>El mismo producto en todos los canales a la vez</p></div>
+        <svg class="comp-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </summary>
+      <table class="tbl comp-tbl">
+        <thead><tr><th>Canal</th><th>Precio</th><th>Tu ganancia</th></tr></thead>
+        <tbody id="compRows"></tbody>
+      </table>
+    </details>
   </section>
 
   <!-- ============ MEDIOS DE PAGO ============ -->
@@ -207,7 +224,7 @@
       </div>
       <div class="field">
         <label>Precio base (efectivo / transferencia)</label>
-        <div class="in"><span class="pre" id="pre2">$</span><input type="number" id="base" value="20000" min="0" inputmode="decimal" placeholder="Ej: 20000" /></div>
+        <div class="in"><span class="pre" id="pre2">$</span><input type="text" id="base" inputmode="numeric" placeholder="Ej: 20.000" /></div>
       </div>
     </div>
 

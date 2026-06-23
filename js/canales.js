@@ -165,3 +165,21 @@ const PLATAFORMAS_INTERNET = [
     editable: true,
   },
 ];
+
+/* Canales curados para la comparativa rápida.
+   comEfectiva = % efectivo ya con IVA sobre comisión incluido. */
+const COMPARACION = [
+  { grupo: 'Local',    nombre: 'Efectivo / Transferencia',     comEfectiva: 0     },
+  { grupo: 'Local',    nombre: 'Ualá Bis QR',                  comEfectiva: 0     },
+  { grupo: 'Local',    nombre: 'MP QR',                        comEfectiva: 0.8   },
+  { grupo: 'Local',    nombre: 'Nave diferida · Débito',       comEfectiva: 0.6   },
+  { grupo: 'Local',    nombre: 'Nave inmediata · Débito',      comEfectiva: 1.3   },
+  { grupo: 'Local',    nombre: 'MP Débito',                    comEfectiva: 1.5   },
+  { grupo: 'Local',    nombre: 'Nave inmediata · Créd. 1c',    comEfectiva: 3.2   },
+  { grupo: 'Local',    nombre: 'MP Crédito 1 cuota',           comEfectiva: 3.99  },
+  { grupo: 'Local',    nombre: 'MP Crédito 6 cuotas',          comEfectiva: 9.99  },
+  { grupo: 'Internet', nombre: 'IG/WA + MP link',              comEfectiva: 4.99  },
+  { grupo: 'Internet', nombre: 'TN + MP Checkout',             comEfectiva: +(2.99 * 1.21 + 4.99).toFixed(2) },
+  { grupo: 'Internet', nombre: 'ML Clásica (c/IVA)',           comEfectiva: +(13 * 1.21).toFixed(2)           },
+  { grupo: 'Internet', nombre: 'ML Premium (c/IVA)',           comEfectiva: +(28 * 1.21).toFixed(2)           },
+];
