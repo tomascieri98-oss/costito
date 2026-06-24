@@ -142,8 +142,18 @@
       <p class="ri-nota" id="riNota" style="display:none">Como RI, el IVA que pagaste al proveedor es un crédito fiscal — no suma a tu costo real.</p>
 
       <div class="field">
-        <label>¿Cuánto querés ganar? <span class="help"><span class="q">?</span><span class="tip">Tu margen sobre el precio final de venta. Si ponés 40%, de cada $100 que vendés, $40 quedan para vos (antes de comisiones).</span></span></label>
-        <div class="in"><input type="number" id="margen" value="40" min="0" max="95" inputmode="decimal" placeholder="Ej: 40" /><span class="suf">% de margen</span></div>
+        <label>¿Cuánto querés ganar? <span class="help"><span class="q">?</span><span class="tip">Con "% margen" definís qué parte del precio final es tuya. Con "$ en pesos" escribís directamente cuánto querés ganar por unidad y calculamos el precio.</span></span></label>
+        <div class="seg" id="gananciaModoSeg" style="margin-bottom:10px">
+          <button class="on" data-modo="pct">% margen</button>
+          <button data-modo="ars">$ en pesos</button>
+        </div>
+        <div id="ganModoPct">
+          <div class="in"><input type="number" id="margen" value="40" min="0" max="95" inputmode="decimal" placeholder="Ej: 40" /><span class="suf">% de margen</span></div>
+        </div>
+        <div id="ganModoArs" style="display:none">
+          <div class="in"><span class="pre">$</span><input type="text" id="gananciaARS" inputmode="numeric" placeholder="Ej: 5.000" /></div>
+          <p class="gan-equiv" id="ganEquiv"></p>
+        </div>
       </div>
       <div class="conv-row" id="convRow">
         <div class="in conv-in"><input type="number" id="markupInp" min="0" max="9999" step="0.1" inputmode="decimal" placeholder="markup" /><span class="suf">% markup</span></div>

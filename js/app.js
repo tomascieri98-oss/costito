@@ -27,6 +27,7 @@
     cur: localStorage.getItem(LS.cur) || 'ARS',
     iva: 21,
     condFiscal: localStorage.getItem(LS.condFiscal) || 'mono',
+    modoGanancia: 'pct',
     productos: [],
     dolarTipo: localStorage.getItem(LS.dolarTipo) || D.dolar.tipoDefault,
     dolares: JSON.parse(localStorage.getItem(LS.dolarCache) || 'null'), // { casa: {valor, fecha} }
@@ -399,14 +400,23 @@
     return parseFloat($('comCustom').value) || 0;
   }
   function leerInputs() {
-    return {
-      costo: parseNum($('costo').value),
-      ivaProveedor: state.iva,
-      margen: $('margen').value,
-      comEfectiva: Calc.comisionEfectiva(comNominal(), $('ivaCom').checked),
-      iibb: parseFloat($('iibb').value) || 0,
-      condicionFiscal: state.condFiscal,
-    };
+    const costo = parseNum($('costo').value);
+    const comEfectiva = Calc.comisionEfectiva(comNominal(), $('ivaCom').checked);
+    const iibb = parseFloat($('iibb').value) || 0;
+    const condicionFiscal = state.condFiscal;
+    let margen;
+    if (state.modoGanancia === 'ars') {
+      const G = parseNum($('gananciaARS').value);
+      const esRI = condicionFiscal !== 'mono';
+      const costoBase = esRI ? costo : costo * (1 + (state.iva || 0) / 100);
+      const com = comEfectiva / 100;
+      const ib = iibb / 100;
+      const libre = 1 - com - ib;
+      margen = (libre > 0 && costoBase + G > 0) ? G * libre / (costoBase + G) * 100 : 0;
+    } else {
+      margen = $('margen').value;
+    }
+    return { costo, ivaProveedor: state.iva, margen, comEfectiva, iibb, condicionFiscal };
   }
 
   function calc() {
@@ -440,6 +450,9 @@
       $('bIvaVenta').textContent = '+ ' + money(r.ivaVentaAmt);
     }
     $('bTotal').textContent = money(r.precio);
+    if (state.modoGanancia === 'ars') {
+      $('ganEquiv').textContent = '≡ ' + r.margenReal.toFixed(1).replace('.', ',') + '% de margen sobre el precio';
+    }
     updateMarkupConv();
     renderComparacion();
   }
@@ -455,6 +468,25 @@
     const esRI = state.condFiscal !== 'mono';
     $('ivaProvField').style.display = esRI ? 'none' : '';
     $('riNota').style.display = esRI ? '' : 'none';
+    calc();
+  });
+
+  // Toggle % margen / $ en pesos
+  $('gananciaModoSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b || b.dataset.modo === state.modoGanancia) return;
+    if (b.dataset.modo === 'ars' && !$('gananciaARS').value) {
+      const rActual = Calc.precioPublicado(leerInputs());
+      if (rActual.ok) $('gananciaARS').value = Math.round(rActual.ganancia).toLocaleString('es-AR');
+    }
+    state.modoGanancia = b.dataset.modo;
+    document.querySelectorAll('#gananciaModoSeg button').forEach((x) => x.classList.remove('on'));
+    b.classList.add('on');
+    const esArs = state.modoGanancia === 'ars';
+    $('ganModoPct').style.display = esArs ? 'none' : '';
+    $('ganModoArs').style.display = esArs ? '' : 'none';
+    $('convRow').style.display = esArs ? 'none' : '';
+    if (esArs) setTimeout(() => $('gananciaARS').focus(), 30);
     calc();
   });
 
@@ -752,13 +784,14 @@
     const categoria = $('modalCategoria').value || '';
     const inputs = leerInputs();
     const canalNom = canalNombreDisplay();
+    const margenGuardar = Math.round(pendingCalcResult.margenReal * 10) / 10;
     const prod = {
       nombre,
-      sub: [canalNom, 'margen ' + $('margen').value + '%', new Date().toLocaleDateString('es-AR')].join(' · '),
+      sub: [canalNom, 'margen ' + margenGuardar + '%', new Date().toLocaleDateString('es-AR')].join(' · '),
       precioARS: pendingCalcResult.precio,
       ganancia: pendingCalcResult.ganancia,
       costo: inputs.costo,
-      margen: parseFloat($('margen').value) || 0,
+      margen: margenGuardar,
       canalNombre: canalNom,
       categoria,
     };
@@ -1009,6 +1042,7 @@
     if (onInput) el.addEventListener('input', onInput);
   }
   bindMoneyInput('costo', calc);
+  bindMoneyInput('gananciaARS', calc);
   bindMoneyInput('base', medios);
   // Valores iniciales con formato
   $('costo').value = (10000).toLocaleString('es-AR');
