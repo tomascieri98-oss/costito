@@ -887,7 +887,7 @@
       '<div class="logo">Costito</div>' +
       '<div class="sub">Lista de productos · ' + date + '</div>' +
       '<table><thead><tr><th>Producto</th><th>Precio</th></tr></thead><tbody>' + rows + '</tbody></table>' +
-      '<footer>Calculado con Costito · costito.vercel.app</footer>' +
+      '<footer>Calculado con Costito · costito.online</footer>' +
       '</body></html>';
     abrirVentanaPdf(html);
   }
@@ -954,7 +954,7 @@
       '<div class="sub">Lista de precios por medio de pago · ' + date + '</div>' +
       '<div class="base-box">Precio base (efectivo / transferencia): <b>' + baseStr + '</b></div>' +
       sectionsHtml +
-      '<footer>Calculado con Costito · costito.vercel.app</footer>' +
+      '<footer>Calculado con Costito · costito.online</footer>' +
       '</body></html>';
     abrirVentanaPdf(html);
   }
