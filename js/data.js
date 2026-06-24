@@ -103,6 +103,6 @@ const COSTITO_DATA = {
     mensaje: 'Hola! Quiero activar Costito Premium 🟢',
     // Suscripción mensual. El cobro real lo define el plan en Mercado Pago;
     // este número es solo para mostrar (debe coincidir con PREMIUM_PRECIO_ARS del backend).
-    precioMensual: 4990,
+    precioMensual: 2000,
   },
 };
