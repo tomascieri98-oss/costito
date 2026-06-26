@@ -343,6 +343,7 @@
     <div class="card">
       <div class="plist" id="plist"></div>
       <div class="export">
+        <button id="impCsv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4M5 21h14"/></svg> Importar CSV</button>
         <button id="expPdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15h6M9 18h4"/></svg> Bajar PDF</button>
         <button id="expCsv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13l3 5M11 13l-3 5"/></svg> Bajar Excel</button>
       </div>
@@ -457,6 +458,15 @@
   </div>
 </div>
 
+<!-- Importador CSV -->
+<input type="file" id="impFile" accept=".csv,text/csv" style="display:none" />
+<div class="overlay" id="impOverlay">
+  <div class="modal-box imp-box">
+    <button class="auth-close" id="impClose" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <div id="impBody"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/data.js"></script>
 <script src="js/canales.js"></script>
@@ -465,5 +475,6 @@
 <script src="js/premium.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/pay.js"></script>
+<script src="js/import.js"></script>
 </body>
 </html>

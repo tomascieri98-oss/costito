@@ -848,6 +848,35 @@
   });
 
   // ============================================================
+  // IMPORTAR (lo usa import.js) — calcula el precio con la config
+  // actual de la calculadora y guarda, igual que el alta manual.
+  // ============================================================
+  window.Costito.importarProducto = function ({ nombre, costo, margen, categoria }) {
+    const base = leerInputs();
+    const r = Calc.precioPublicado({ ...base, costo: Number(costo) || 0, margen: Number(margen) || 0 });
+    if (!r.ok) return Promise.reject(new Error(r.motivo || 'No se pudo calcular el precio'));
+    const canalNom = canalNombreDisplay();
+    const margenReal = Math.round(r.margenReal * 10) / 10;
+    const prod = {
+      nombre: nombre || 'Producto sin nombre',
+      sub: [canalNom, 'margen ' + margenReal + '%', new Date().toLocaleDateString('es-AR')].join(' · '),
+      precioARS: r.precio,
+      ganancia: r.ganancia,
+      costo: Number(costo) || 0,
+      margen: margenReal,
+      canalNombre: canalNom,
+      categoria: categoria || '',
+    };
+    return window.CostitoAuth.saveProduct(prod).then((id) => {
+      state.productos.unshift({ id, nombre: prod.nombre, sub: prod.sub, precioARS: prod.precioARS, ganancia: prod.ganancia, categoria: prod.categoria });
+      return prod;
+    });
+  };
+  // Datos de la config actual para mostrarlos en el preview del importador
+  window.Costito.configActual = () => ({ canal: canalNombreDisplay(), cond: state.condFiscal });
+  window.Costito.refreshProds = () => renderProds();
+
+  // ============================================================
   // EXPORTAR
   // ============================================================
   $('expCsv').addEventListener('click', () => {
