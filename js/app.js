@@ -848,6 +848,35 @@
   });
 
   // ============================================================
+  // IMPORTAR (lo usa import.js) — calcula el precio con la config
+  // actual de la calculadora y guarda, igual que el alta manual.
+  // ============================================================
+  window.Costito.importarProducto = function ({ nombre, costo, margen, categoria }) {
+    const base = leerInputs();
+    const r = Calc.precioPublicado({ ...base, costo: Number(costo) || 0, margen: Number(margen) || 0 });
+    if (!r.ok) return Promise.reject(new Error(r.motivo || 'No se pudo calcular el precio'));
+    const canalNom = canalNombreDisplay();
+    const margenReal = Math.round(r.margenReal * 10) / 10;
+    const prod = {
+      nombre: nombre || 'Producto sin nombre',
+      sub: [canalNom, 'margen ' + margenReal + '%', new Date().toLocaleDateString('es-AR')].join(' · '),
+      precioARS: r.precio,
+      ganancia: r.ganancia,
+      costo: Number(costo) || 0,
+      margen: margenReal,
+      canalNombre: canalNom,
+      categoria: categoria || '',
+    };
+    return window.CostitoAuth.saveProduct(prod).then((id) => {
+      state.productos.unshift({ id, nombre: prod.nombre, sub: prod.sub, precioARS: prod.precioARS, ganancia: prod.ganancia, categoria: prod.categoria });
+      return prod;
+    });
+  };
+  // Datos de la config actual para mostrarlos en el preview del importador
+  window.Costito.configActual = () => ({ canal: canalNombreDisplay(), cond: state.condFiscal });
+  window.Costito.refreshProds = () => renderProds();
+
+  // ============================================================
   // EXPORTAR
   // ============================================================
   $('expCsv').addEventListener('click', () => {
@@ -879,11 +908,21 @@
       '<tr><td><div class="n">' + escapeHtml(p.nombre) + '</div><div class="d">' + escapeHtml(p.sub) + '</div></td>' +
       '<td class="pr">' + money(p.precioARS) + '</td></tr>'
     ).join('');
+    const neg = (window.CostitoNegocio && window.CostitoNegocio.get) ? window.CostitoNegocio.get() : { nombre: '', logo: '' };
+    const header = (neg.logo || neg.nombre)
+      ? '<div class="biz">' + (neg.logo ? '<img class="bizlogo" src="' + neg.logo + '">' : '') +
+        '<div><div class="bizname">' + escapeHtml(neg.nombre || 'Mi negocio') + '</div>' +
+        '<div class="sub">Lista de precios · ' + date + '</div></div></div>'
+      : '<div class="logo">Costito</div><div class="sub">Lista de productos · ' + date + '</div>';
     const html = '<!DOCTYPE html><html lang="es-AR"><head><meta charset="UTF-8">' +
       '<title>Costito — Mis Productos</title><style>' +
       'body{font-family:Arial,Helvetica,sans-serif;max-width:680px;margin:30px auto;color:#19271F}' +
       '.logo{font-size:22px;font-weight:700;color:#1F8A5B;margin-bottom:2px}' +
       '.sub{color:#5E7268;font-size:12px;margin-bottom:22px}' +
+      '.biz{display:flex;align-items:center;gap:13px;margin-bottom:22px}' +
+      '.bizlogo{width:56px;height:56px;object-fit:contain}' +
+      '.bizname{font-size:21px;font-weight:700;color:#19271F}' +
+      '.biz .sub{margin:2px 0 0}' +
       'table{width:100%;border-collapse:collapse}' +
       'th{background:#1F8A5B;color:#fff;padding:10px 14px;text-align:left;font-size:12px;font-weight:600}' +
       'th:last-child{text-align:right}' +
@@ -894,8 +933,7 @@
       'border-top:1px solid #CBE5D6;padding-top:10px}' +
       '@media print{body{margin:10px}}' +
       '</style></head><body>' +
-      '<div class="logo">Costito</div>' +
-      '<div class="sub">Lista de productos · ' + date + '</div>' +
+      header +
       '<table><thead><tr><th>Producto</th><th>Precio</th></tr></thead><tbody>' + rows + '</tbody></table>' +
       '<footer>Calculado con Costito · costito.online</footer>' +
       '</body></html>';

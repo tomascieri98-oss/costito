@@ -40,19 +40,31 @@ window.CostitoAuth = (function () {
   function onChange(cb) { listeners.push(cb); return () => { listeners = listeners.filter((f) => f !== cb); }; }
 
   // Supabase emite INITIAL_SESSION al cargar — sincroniza el estado apenas resuelve
-  // Fetch del plan del perfil para que pay.js sepa si el usuario ya es Premium.
-  sb.auth.onAuthStateChange(async (_event, session) => {
+  // En este callback SOLO va trabajo SÍNCRONO. Hacer llamadas a Supabase acá adentro
+  // (await sb.from..., loadProducts) deadlock-ea el cliente: signInWithPassword nunca
+  // resuelve y el botón queda en "Un segundo…". El fetch del plan y la carga de productos
+  // se difieren con setTimeout(0) para soltar el lock de auth. (Patrón recomendado por Supabase.)
+  sb.auth.onAuthStateChange((_event, session) => {
     if (!session) {
       currentUser = null;
       emit(null);
-      document.dispatchEvent(new CustomEvent('costito:authchange', { detail: null }));
+      setTimeout(() => document.dispatchEvent(new CustomEvent('costito:authchange', { detail: null })), 0);
       return;
     }
     const base = makeUser(session.user);
-    const { data: perfil } = await sb.from('profiles').select('plan').eq('id', session.user.id).single();
-    currentUser = { ...base, plan: perfil?.plan || 'free' };
+    currentUser = base;     // user base inmediato → el avatar aparece en el header al toque
     emit(currentUser);
-    document.dispatchEvent(new CustomEvent('costito:authchange', { detail: currentUser }));
+    // Diferido: el plan vive en Supabase (tabla profiles). Se trae FUERA del callback.
+    setTimeout(async () => {
+      try {
+        const { data: perfil } = await sb.from('profiles').select('plan').eq('id', session.user.id).single();
+        currentUser = { ...base, plan: (perfil && perfil.plan) ? perfil.plan : 'free' };
+      } catch (e) {
+        currentUser = { ...base, plan: 'free' }; // si falla, queda como free
+      }
+      emit(currentUser);
+      document.dispatchEvent(new CustomEvent('costito:authchange', { detail: currentUser }));
+    }, 0);
   });
 
   function translateError(msg) {

@@ -131,7 +131,7 @@
       </div>
 
       <div class="field">
-        <label>¿Cuánto te costó? <span class="help"><span class="q">?</span><span class="tip">El precio que pagaste al proveedor, sin contar el IVA. Si te facturan con IVA, poné el neto.</span></span></label>
+        <label>¿Cuánto te costó el producto? <span class="help"><span class="q">?</span><span class="tip">El precio que pagaste al proveedor, sin contar el IVA. Si te facturan con IVA, poné el neto.</span></span></label>
         <div class="in"><span class="pre" id="pre1">$</span><input type="text" id="costo" inputmode="numeric" placeholder="Ej: 10.000" /></div>
       </div>
 
@@ -337,12 +337,30 @@
     <h2 class="section-title">Mis productos</h2>
     <p class="section-sub">Tu lista de precios calculados, siempre a mano. Se guardan en este dispositivo. Llevátela en PDF para imprimir o en Excel para seguir trabajándola.</p>
 
+    <!-- Mi negocio: nombre + logo para brandear el PDF -->
+    <div class="negocio-card" id="negocioCard">
+      <div class="neg-logo" id="negLogoBox" role="button" tabindex="0" aria-label="Subir logo del negocio">
+        <img id="negLogoImg" alt="Logo del negocio" />
+        <span class="neg-ph" id="negLogoPh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-6 9 6v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 21V12h6v9"/></svg>Logo</span>
+      </div>
+      <div class="neg-fields">
+        <input type="text" id="negNombre" placeholder="Nombre de tu negocio" maxlength="40" />
+        <div class="neg-actions">
+          <button id="negUpload" type="button">Subir logo</button>
+          <button id="negRemove" type="button" style="display:none">Quitar</button>
+        </div>
+        <p class="neg-note">Aparece en el encabezado del PDF de tu lista de precios.</p>
+      </div>
+      <input type="file" id="negFile" accept="image/png,image/jpeg,image/webp" style="display:none" />
+    </div>
+
     <p class="prod-count" id="prodCount"></p>
     <div class="cat-filter" id="catFilter" style="display:none"></div>
 
     <div class="card">
       <div class="plist" id="plist"></div>
       <div class="export">
+        <button id="impCsv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4M5 21h14"/></svg> Importar CSV</button>
         <button id="expPdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15h6M9 18h4"/></svg> Bajar PDF</button>
         <button id="expCsv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13l3 5M11 13l-3 5"/></svg> Bajar Excel</button>
       </div>
@@ -457,6 +475,15 @@
   </div>
 </div>
 
+<!-- Importador CSV -->
+<input type="file" id="impFile" accept=".csv,text/csv" style="display:none" />
+<div class="overlay" id="impOverlay">
+  <div class="modal-box imp-box">
+    <button class="auth-close" id="impClose" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <div id="impBody"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/data.js"></script>
 <script src="js/canales.js"></script>
@@ -465,5 +492,7 @@
 <script src="js/premium.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/pay.js"></script>
+<script src="js/import.js"></script>
+<script src="js/negocio.js"></script>
 </body>
 </html>
