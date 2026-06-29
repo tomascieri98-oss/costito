@@ -26,7 +26,7 @@
           '<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7l1 9h9"/><circle cx="9" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M3 3l-1-2"/></svg></span>',
           '<div><h3>Materia prima</h3><p>Los ingredientes o materiales que usás para producir</p></div>',
         '</div>',
-        '<datalist id="prod-units"><option value="g"><option value="kg"><option value="mg"><option value="ml"><option value="l"><option value="litros"><option value="u"><option value="taza"><option value="cdita"><option value="cda"><option value="pizca"><option value="oz"><option value="lb"><option value="sobre"><option value="lata"><option value="paq."></datalist>',
+        '<datalist id="prod-units"><option value="g"><option value="kg"><option value="ml"><option value="litros"><option value="l"><option value="mg"><option value="u"><option value="taza"><option value="cdita"><option value="cda"><option value="pizca"><option value="oz"><option value="lb"><option value="sobre"><option value="lata"><option value="paq."></datalist>',
         '<div id="ping-header" class="ping-header">',
           '<span>Ingrediente</span>',
           '<span>Cantidad <span class="help"><span class="q">?</span><span class="tip">Cuánto usás de este ingrediente en la receta. Ej: 500 g de harina.</span></span></span>',
