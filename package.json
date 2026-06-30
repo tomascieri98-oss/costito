@@ -1,0 +1,12 @@
+{
+  "name": "costito",
+  "version": "1.0.0",
+  "description": "Calculadora de precios para comerciantes argentinos",
+  "private": true,
+  "scripts": {
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^1.4.1"
+  }
+}
