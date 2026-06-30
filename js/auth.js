@@ -57,10 +57,21 @@ window.CostitoAuth = (function () {
     // Diferido: el plan vive en Supabase (tabla profiles). Se trae FUERA del callback.
     setTimeout(async () => {
       try {
-        const { data: perfil } = await sb.from('profiles').select('plan').eq('id', session.user.id).single();
-        currentUser = { ...base, plan: (perfil && perfil.plan) ? perfil.plan : 'free' };
+        const { data: perfil } = await sb.from('profiles')
+          .select('plan, plan_valid_until, promo_type')
+          .eq('id', session.user.id).single();
+        let plan = (perfil && perfil.plan) ? perfil.plan : 'free';
+        const validUntil = perfil && perfil.plan_valid_until ? new Date(perfil.plan_valid_until) : null;
+        // Si el plan tiene fecha de vencimiento y ya venció, tratar como free
+        if (plan === 'premium' && validUntil && validUntil < new Date()) plan = 'free';
+        currentUser = {
+          ...base,
+          plan,
+          planValidUntil: validUntil,
+          promoType: (perfil && perfil.promo_type) || null,
+        };
       } catch (e) {
-        currentUser = { ...base, plan: 'free' }; // si falla, queda como free
+        currentUser = { ...base, plan: 'free', planValidUntil: null, promoType: null };
       }
       emit(currentUser);
       document.dispatchEvent(new CustomEvent('costito:authchange', { detail: currentUser }));
@@ -88,11 +99,25 @@ window.CostitoAuth = (function () {
       ? sb.auth.signUp({ email, password: pass })
       : sb.auth.signInWithPassword({ email, password: pass });
 
-    return action.then(({ data, error }) => {
+    return action.then(async ({ data, error }) => {
       if (error) throw new Error(translateError(error.message));
       // signUp sin confirmación de email: data.session es null
       if (mode === 'signup' && data.user && !data.session) {
         throw new Error('Te mandamos un email de confirmación. Revisá tu bandeja.');
+      }
+      // Al registrarse, intentar reclamar la promo de lanzamiento
+      if (mode === 'signup' && data.session) {
+        try {
+          await fetch(SUPABASE_URL + '/functions/v1/reclamar-promo', {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + data.session.access_token,
+              'apikey': SUPABASE_KEY,
+              'Content-Type': 'application/json',
+            },
+            body: '{}',
+          });
+        } catch (e) { /* silencioso — no bloquea el registro */ }
       }
       return makeUser(data.user);
     });
@@ -159,7 +184,11 @@ window.CostitoAuth = (function () {
       .select('id')
       .single()
       .then(({ data, error }) => {
-        if (error) throw new Error(error.message);
+        if (error) {
+          if (error.message && error.message.includes('limit_reached'))
+            throw new Error('limit_reached');
+          throw new Error(error.message);
+        }
         return data.id;
       });
   }

@@ -101,7 +101,7 @@ window.CostitoPay = (function () {
 
   btn.addEventListener('click', () => Pay.startCheckout());
 
-  // Botón cancelar suscripción (solo visible para usuarios premium)
+  // Botón cancelar suscripción (solo visible para usuarios premium con MP)
   const btnCancel = document.createElement('button');
   btnCancel.className = 'acct-cancel';
   btnCancel.id = 'cancelPremium';
@@ -110,9 +110,28 @@ window.CostitoPay = (function () {
   menu.insertBefore(btnCancel, logout);
   btnCancel.addEventListener('click', () => Pay.cancelSubscription());
 
+  // Banner de promo activa
+  const promoEl = document.createElement('div');
+  promoEl.className = 'acct-promo-badge';
+  promoEl.id = 'promoBadge';
+  promoEl.style.display = 'none';
+  menu.insertBefore(promoEl, logout);
+
   function sync(u) {
-    btn.style.display = (u && u.plan !== 'premium') ? 'flex' : 'none';
-    btnCancel.style.display = (u && u.plan === 'premium') ? 'flex' : 'none';
+    const isPremium = u && u.plan === 'premium';
+    const isPromo   = isPremium && u.promoType === 'launch50';
+    const isMpPlan  = isPremium && !isPromo;
+
+    btn.style.display       = (!isPremium) ? 'flex' : 'none';
+    btnCancel.style.display = isMpPlan ? 'flex' : 'none';
+
+    if (isPromo && u.planValidUntil) {
+      const vence = u.planValidUntil.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
+      promoEl.style.display = 'block';
+      promoEl.innerHTML = '<b>30 días gratis activos</b><span>Vence el ' + vence + '</span>';
+    } else {
+      promoEl.style.display = 'none';
+    }
   }
   Auth.onChange(sync);
   sync(Auth.getUser());

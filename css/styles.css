@@ -564,6 +564,9 @@ details[open] .comp-chev{transform:rotate(180deg)}
   color:var(--tinta-soft);font-family:var(--sans);font-weight:600;font-size:13px;padding:9px 12px;
   border-radius:10px;cursor:pointer;transition:.15s;text-align:left;margin-bottom:4px}
 .acct-cancel:hover{background:rgba(200,50,50,.08);color:#c44}
+.acct-promo-badge{margin:4px 12px 8px;padding:8px 12px;background:rgba(31,138,91,.1);border-radius:10px;border:1px solid rgba(31,138,91,.2)}
+.acct-promo-badge b{display:block;font-size:12px;font-weight:700;color:var(--verde);font-family:var(--sans)}
+.acct-promo-badge span{display:block;font-size:11px;color:var(--tinta-soft);font-family:var(--sans);margin-top:1px}
 
 /* ---------- IMPORTADOR CSV ---------- */
 .imp-box{width:min(460px,calc(100vw - 32px));text-align:left}
