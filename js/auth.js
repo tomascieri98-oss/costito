@@ -108,7 +108,7 @@ window.CostitoAuth = (function () {
       // Al registrarse, intentar reclamar la promo de lanzamiento
       if (mode === 'signup' && data.session) {
         try {
-          await fetch(SUPABASE_URL + '/functions/v1/reclamar-promo', {
+          const promoRes = await fetch(SUPABASE_URL + '/functions/v1/reclamar-promo', {
             method: 'POST',
             headers: {
               'Authorization': 'Bearer ' + data.session.access_token,
@@ -117,6 +117,15 @@ window.CostitoAuth = (function () {
             },
             body: '{}',
           });
+          if (promoRes.ok) {
+            const promoData = await promoRes.json();
+            if (promoData.result === 'success') {
+              setTimeout(() => {
+                const t = window.Costito && window.Costito.toast;
+                if (t) t('🎉 ¡Entraste a la promo de lanzamiento! Tenés 30 días del plan completo gratis.');
+              }, 1000);
+            }
+          }
         } catch (e) { /* silencioso — no bloquea el registro */ }
       }
       return makeUser(data.user);
