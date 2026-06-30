@@ -54,6 +54,16 @@ const PROCESADORES_LOCAL = [
     ],
   },
   {
+    id: 'gocuotas',
+    nombre: 'GoCuotas',
+    nota: 'Cuotas sin tarjeta de crédito. Los % ya incluyen IVA. Verificá las tasas vigentes en gocuotas.com.',
+    medios: [
+      { id: 'gc3',  label: '3 cuotas',  comision: 6.5  },
+      { id: 'gc6',  label: '6 cuotas',  comision: 11.0 },
+      { id: 'gc12', label: '12 cuotas', comision: 18.5 },
+    ],
+  },
+  {
     id: 'getnet',
     nombre: 'Getnet (Santander)',
     nota: 'Los % ya incluyen IVA. Consultá con tu ejecutivo del banco.',

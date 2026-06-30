@@ -255,7 +255,11 @@
     setHTML($('procesador-sel'), PROCESADORES_LOCAL.map((p) =>
       '<option value="' + p.id + '">' + p.nombre + '</option>'
     ).join(''));
-    updateMedioLocalOptions(false);
+    // Sincronizar canalState con el valor real del select (puede estar restaurado por el browser)
+    if ($('procesador-sel').value) {
+      canalState.procesadorId = $('procesador-sel').value;
+      resetMedioLocal();
+    }
 
     // Plataformas internet (calc tab)
     setHTML($('plataforma-sel'), PLATAFORMAS_INTERNET.map((p) =>
@@ -288,16 +292,9 @@
     syncMediosUI();
   }
 
-  function updateMedioLocalOptions(reset) {
+  function resetMedioLocal() {
     const proc = PROCESADORES_LOCAL.find((p) => p.id === canalState.procesadorId) || PROCESADORES_LOCAL[0];
-    setHTML($('medio-local-sel'), proc.medios.map((m) => {
-      const pct = m.comision !== null ? ' (' + String(m.comision).replace('.', ',') + '%)' : '';
-      return '<option value="' + m.id + '">' + m.label + pct + '</option>';
-    }).join(''));
-    if (reset) {
-      canalState.medioId = proc.medios[0].id;
-      $('medio-local-sel').value = canalState.medioId;
-    }
+    if (proc && proc.medios.length) canalState.medioId = proc.medios[0].id;
   }
 
   function updateProcOnlineOptions(reset) {
@@ -472,6 +469,39 @@
     }
     updateMarkupConv();
     renderComparacion();
+    renderCanalMedios();
+  }
+
+  function renderCanalMedios() {
+    const list = $('canal-medios-list');
+    if (!list || canalState.tipo !== 'local') {
+      if (list) list.style.display = 'none';
+      return;
+    }
+    const proc = PROCESADORES_LOCAL.find((p) => p.id === canalState.procesadorId);
+    if (!proc || !proc.medios.length) { list.style.display = 'none'; return; }
+    list.style.display = '';
+    const baseInputs = leerInputs();
+    const rows = proc.medios.map((m) => {
+      const isOn = m.id === canalState.medioId;
+      const comDisp = m.comision === null ? '—'
+        : m.comision === 0 ? 'Sin comisión'
+        : String(m.comision).replace('.', ',') + '%';
+      let precioStr = '—';
+      if (m.comision !== null) {
+        const r = Calc.precioPublicado({ ...baseInputs, comEfectiva: m.comision });
+        if (r.ok) precioStr = money(r.precio);
+      } else if (m.editable) {
+        const r = Calc.precioPublicado(baseInputs);
+        if (r.ok) precioStr = money(r.precio);
+      }
+      return '<div class="canal-medio-row' + (isOn ? ' on' : '') + '" data-mid="' + m.id + '">' +
+        '<div><div class="canal-medio-name">' + m.label + '</div>' +
+        '<div class="canal-medio-com">' + comDisp + '</div></div>' +
+        '<div class="canal-medio-price">' + precioStr + '</div>' +
+        '</div>';
+    }).join('');
+    setHTML(list, rows);
   }
 
   // Condición fiscal
@@ -532,15 +562,25 @@
   $('procesador-sel').addEventListener('change', () => {
     canalState.procesadorId = $('procesador-sel').value;
     canalState.desvinculado = false;
-    updateMedioLocalOptions(true);
+    resetMedioLocal();
     syncCanalUI();
   });
 
-  // Medio de pago local
-  $('medio-local-sel').addEventListener('change', () => {
-    canalState.medioId = $('medio-local-sel').value;
+  // Delegado de click para la lista de medios inline del canal
+  $('canal-medios-list').addEventListener('click', (e) => {
+    const row = e.target.closest('.canal-medio-row');
+    if (!row) return;
+    const proc = PROCESADORES_LOCAL.find((p) => p.id === canalState.procesadorId);
+    if (!proc) return;
+    const medio = proc.medios.find((m) => m.id === row.dataset.mid);
+    if (!medio) return;
+    canalState.medioId = medio.id;
     canalState.desvinculado = false;
-    syncCanalUI();
+    if (medio.comision !== null) {
+      $('comCustom').value = medio.comision;
+      $('com-desvin-badge').style.display = 'none';
+    }
+    calc();
   });
 
   // Plataforma internet
