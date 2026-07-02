@@ -18,10 +18,6 @@ window.CostitoClientes = (function () {
   function render() {
     const list = $('cli-list');
     if (!list) return;
-    if (!auth()) {
-      list.innerHTML = '<p class="cli-empty">Iniciá sesión para gestionar tus clientes.</p>';
-      return;
-    }
     if (!clientes.length) {
       list.innerHTML = '<p class="cli-empty">Todavía no tenés clientes. Agregá el primero arriba.</p>';
       return;

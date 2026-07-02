@@ -41,7 +41,7 @@ window.CostitoPresupuestos = (function () {
     const list = $('ppto-list');
     if (!list) return;
     if (!auth()) {
-      list.innerHTML = '<p class="ppto-empty">Iniciá sesión para ver tus presupuestos.</p>';
+      list.innerHTML = '<p class="ppto-empty">Todavía no creaste ningún presupuesto. Usá el botón de abajo para empezar.</p>';
       return;
     }
     if (!presupuestos.length) {
