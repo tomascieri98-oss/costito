@@ -820,6 +820,19 @@ details[open] .comp-chev{transform:rotate(180deg)}
   border-radius:12px;cursor:pointer;transition:.15s;white-space:nowrap}
 .prb-calc:hover{background:rgba(255,255,255,.28);color:var(--on-verde)}
 
+/* Cartel de contexto en la calculadora: "poniéndole precio a X" */
+.calc-context{display:flex;align-items:center;gap:12px;background:var(--crema-2);
+  border:1.5px solid var(--verde);border-radius:12px;padding:11px 14px;margin-bottom:14px}
+.calc-context .cc-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.cc-tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--verde)}
+.cc-name{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--tinta);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cc-cost{font-size:12px;color:var(--tinta-soft)}
+.cc-x{flex:0 0 auto;width:30px;height:30px;border:0;border-radius:9px;background:var(--papel);
+  color:var(--tinta-soft);cursor:pointer;display:grid;place-items:center;transition:.15s}
+.cc-x:hover{color:var(--naranja);background:var(--crema)}
+.cc-x svg{width:16px;height:16px}
+
 /* Layout mobile para la tabla de ingredientes y gastos */
 @media(max-width:600px){
   /* Ingredientes: header adaptado a 3 columnas (con ? tooltips visibles) */
@@ -864,11 +877,19 @@ details[open] .comp-chev{transform:rotate(180deg)}
   .pgasto-row>:nth-child(3){grid-area:monto}
   .pgasto-row>:nth-child(4){grid-column:1/-1}
   .pgasto-row>:nth-child(5){grid-area:del;justify-self:end;align-self:start}
-  .prod-result-bar{padding:12px 14px 14px;gap:10px}
+  /* La barra se apila: costo arriba, los dos botones abajo a lo ancho
+     (el primario "Guardar y ponerle precio →" no entra en una fila con el costo) */
+  .prod-result-bar{flex-direction:column;align-items:stretch;padding:12px 14px 14px;gap:10px}
   .prb-label{font-size:9.5px;letter-spacing:.8px}
   .prb-val{font-size:24px}
-  .prb-save{padding:10px 12px;font-size:13px}
-  .prb-calc{padding:9px 10px;font-size:13px}
+  /* Los botones se apilan (el primario es largo y no entra al lado del otro) */
+  .prb-actions{flex-direction:column;gap:8px}
+  .prb-actions button{width:100%;justify-content:center}
+  .prb-save{padding:12px 10px;font-size:14px}
+  .prb-calc{padding:12px 10px;font-size:14px}
+  /* Cartel de contexto: la × no se achica */
+  .calc-context{gap:10px;padding:10px 12px}
+  .cc-name{font-size:15px}
 }
 
 

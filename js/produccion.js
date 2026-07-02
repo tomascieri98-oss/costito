@@ -186,11 +186,11 @@
           '<div class="prb-val" id="prb-costo-val">$ —</div>',
         '</div>',
         '<div class="prb-actions">',
-          '<button class="prb-save" id="prb-save-btn">',
+          '<button class="prb-calc" id="prb-save-cost-btn" type="button">Guardar sin precio</button>',
+          '<button class="prb-save" id="prb-save-btn" type="button">',
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
-            'Guardar',
+            'Guardar y ponerle precio →',
           '</button>',
-          '<button class="prb-calc" id="prb-calc-btn">Ir a Calculadora →</button>',
         '</div>',
       '</div>',
     ].join('');
@@ -221,8 +221,8 @@
     $('pgasto-list').addEventListener('change', onGastoChange);
 
     // Eventos — Acciones
-    $('prb-save-btn').addEventListener('click', onSave);
-    $('prb-calc-btn').addEventListener('click', onUsarCosto);
+    $('prb-save-btn').addEventListener('click', onSaveAndPrice);
+    $('prb-save-cost-btn').addEventListener('click', onSave);
 
     // Eventos — Modal confirmación
     $('prod-confirm-yes').addEventListener('click', confirmDelete);
@@ -563,14 +563,20 @@
   // ============================================================
   // GUARDAR / USAR COSTO
   // ============================================================
+  // Secundario: guardar solo el costo + receta (ponerle precio después)
   function onSave() {
     if (!lastResult) return;
     window.Costito && window.Costito.abrirGuardarProduccion(lastResult.costoTotalPorUnidad, { insumos, receta, gastos, unidades });
   }
 
-  function onUsarCosto() {
-    if (!lastResult || !lastResult.costoTotalPorUnidad) return;
-    window.Costito && window.Costito.usarComoCosto(lastResult.costoTotalPorUnidad);
+  // Primario: guardar la receta y seguir de largo a ponerle el precio de venta
+  function onSaveAndPrice() {
+    if (!lastResult || !lastResult.costoTotalPorUnidad) {
+      const t = window.Costito && window.Costito.toast;
+      if (t) t('Cargá al menos un insumo para calcular el costo');
+      return;
+    }
+    window.Costito && window.Costito.guardarYponerPrecioProduccion(lastResult.costoTotalPorUnidad, { insumos, receta, gastos, unidades });
   }
 
   document.addEventListener('costito:authchange', (e) => {

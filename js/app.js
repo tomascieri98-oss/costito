@@ -71,12 +71,15 @@
       localStorage.setItem('costito_premium', on ? '1' : '0');
       document.dispatchEvent(new CustomEvent('costito:premiumchange'));
     },
-    // Carga un costo (ARS) en la calculadora principal y va a esa tab
+    // Carga un costo (ARS) en la calculadora principal y va a esa tab.
+    // Si venís a ponerle precio a un producto (precioTargetProductId seteado),
+    // mostramos el cartel de contexto en vez del toast genérico.
     usarComoCosto(ars) {
       $('costo').value = Math.round(ars).toLocaleString('es-AR');
       document.querySelector('[data-tab="calc"]').click();
       $('costo').dispatchEvent(new Event('input'));
-      toast('Costo cargado en la calculadora');
+      if (precioTargetProductId) showCalcContext();
+      else toast('Costo cargado en la calculadora');
     },
   };
 
@@ -128,6 +131,8 @@
     b.classList.add('on');
     document.querySelectorAll('.panel').forEach((p) => p.classList.remove('on'));
     $(b.dataset.tab).classList.add('on');
+    // Si salís de la calculadora, se cancela el "ponerle precio a X" en curso
+    if (b.dataset.tab !== 'calc') clearCalcContext();
     // Centrar la tab clickeada (útil cuando estaba cortada en el borde)
     b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -918,6 +923,38 @@
   let catActiva = '';
   let precioTargetProductId = null; // producto pre-seleccionado al abrir el modal desde "Agregar precio"
 
+  // ---------- Cartel de contexto en la calculadora ----------
+  // Cuando estás poniéndole precio a un producto puntual (desde Producción o
+  // desde "Agregar precio de venta"), mostramos arriba de la calculadora a qué
+  // producto le estás poniendo precio. La × cancela y vuelve a un producto normal.
+  function showCalcContext() {
+    const el = $('calcContext');
+    if (!el) return;
+    const prod = state.productos.find((p) => String(p.id) === String(precioTargetProductId));
+    if (!prod) { el.style.display = 'none'; return; }
+    setHTML(el,
+      '<div class="cc-info">' +
+        '<span class="cc-tag">Poniéndole precio a</span>' +
+        '<b class="cc-name">' + escapeHtml(prod.nombre) + '</b>' +
+        '<span class="cc-cost">costo ' + money(prod.costoARS) + '</span>' +
+      '</div>' +
+      '<button class="cc-x" id="calcContextX" type="button" aria-label="Cancelar">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
+      '</button>'
+    );
+    el.style.display = 'flex';
+    const x = $('calcContextX');
+    if (x) x.addEventListener('click', clearCalcContext);
+  }
+  function hideCalcContext() {
+    const el = $('calcContext');
+    if (el) { el.style.display = 'none'; el.textContent = ''; }
+  }
+  function clearCalcContext() {
+    precioTargetProductId = null;
+    hideCalcContext();
+  }
+
   function renderCatFilter() {
     const el = $('catFilter');
     if (!el) return;
@@ -1084,6 +1121,7 @@
   let pendingServicio = null;
   let pendingProduccion = null;  // costoTotalPorUnidad (number)
   let pendingRecipeData = null;
+  let pendingProduccionContinue = false; // true = tras guardar la receta, encadenar al paso 2 (ponerle precio)
 
   const PROD_LIMIT_FREE = 5;
   const CATS_DEFAULT = ['Ropa y calzado','Electrónica','Hogar y deco','Alimentos','Belleza','Deportes','Herramientas','Servicios','Otro'];
@@ -1159,6 +1197,8 @@
     pendingServicio = null;
     pendingProduccion = null;
     pendingRecipeData = null;
+    pendingProduccionContinue = false;
+    hideCalcContext();
     const linkWrap = $('modalLinkWrap');
     if (linkWrap) linkWrap.style.display = 'none';
     const newFields = $('modalNewProdFields');
@@ -1166,13 +1206,21 @@
   }
 
   function confirmSave() {
-    if (!pendingCalcResult && !pendingServicio && !pendingProduccion) return;
+    // Capturar los pending ANTES de cerrar el modal: closeSaveModal() los limpia,
+    // así que trabajamos sobre copias locales estables.
+    const calcResult = pendingCalcResult;
+    const servicio = pendingServicio;
+    const produccion = pendingProduccion;
+    const recipeData = pendingRecipeData;
+    const continueToPrice = pendingProduccionContinue;
+
+    if (!calcResult && !servicio && !produccion) return;
 
     const linkSel = $('modalLinkSel');
     const linkId = (linkSel && linkSel.value) ? linkSel.value : '';
     const isNewProd = !linkId;
 
-    const fallback = pendingProduccion ? 'Producción sin nombre' : pendingServicio ? 'Servicio sin nombre' : 'Producto sin nombre';
+    const fallback = produccion ? 'Producción sin nombre' : servicio ? 'Servicio sin nombre' : 'Producto sin nombre';
     const nombre = ($('modalNombre').value || '').trim() || fallback;
     const categoria = ($('modalCategoria').value || '').trim();
     const codigo = ($('modalCodigo').value || '').trim();
@@ -1190,15 +1238,15 @@
     const hoy = new Date().toLocaleDateString('es-AR');
 
     function buildPriceData() {
-      if (pendingServicio) {
-        return { canal: 'Servicio por hora', margen: 0, precioARS: pendingServicio.precioHora, ganancia: 0 };
+      if (servicio) {
+        return { canal: 'Servicio por hora', margen: 0, precioARS: servicio.precioHora, ganancia: 0 };
       }
       const canalNom = canalNombreDisplay();
-      const margenReal = Math.round(pendingCalcResult.margenReal * 10) / 10;
-      return { canal: canalNom, margen: margenReal, precioARS: pendingCalcResult.precio, ganancia: pendingCalcResult.ganancia };
+      const margenReal = Math.round(calcResult.margenReal * 10) / 10;
+      return { canal: canalNom, margen: margenReal, precioARS: calcResult.precio, ganancia: calcResult.ganancia };
     }
 
-    const hasPrice = !!(pendingCalcResult || pendingServicio);
+    const hasPrice = !!(calcResult || servicio);
 
     // Caso A: agregar precio a producto existente
     if (!isNewProd && hasPrice) {
@@ -1220,18 +1268,20 @@
 
     // Caso B: nuevo producto
     let prodData;
-    if (pendingProduccion) {
-      prodData = { nombre, costo: pendingProduccion, tipo: 'produccion', categoria, codigo, canalNombre: 'Producción propia', recipeData: pendingRecipeData };
-    } else if (pendingServicio) {
-      prodData = { nombre, costo: pendingServicio.costosFijos || 0, tipo: 'servicio', categoria, codigo, canalNombre: 'Servicio por hora' };
+    if (produccion) {
+      prodData = { nombre, costo: produccion, tipo: 'produccion', categoria, codigo, canalNombre: 'Producción propia', recipeData: recipeData };
+    } else if (servicio) {
+      prodData = { nombre, costo: servicio.costosFijos || 0, tipo: 'servicio', categoria, codigo, canalNombre: 'Servicio por hora' };
     } else {
       const inputs = leerInputs();
       const canalNom = canalNombreDisplay();
-      prodData = { nombre, costo: inputs.costo, tipo: 'reventa', categoria, codigo, canalNombre: canalNom, margen: Math.round(pendingCalcResult.margenReal * 10) / 10 };
+      prodData = { nombre, costo: inputs.costo, tipo: 'reventa', categoria, codigo, canalNombre: canalNom, margen: Math.round(calcResult.margenReal * 10) / 10 };
     }
 
+    let savedProductId = null;
     window.CostitoAuth.saveProduct(prodData)
       .then((productId) => {
+        savedProductId = productId;
         const newProd = { id: productId, nombre: prodData.nombre, costoARS: prodData.costo, categoria, codigo, tipo: prodData.tipo, recipeData: prodData.recipeData || null, precios: [] };
         state.productos.unshift(newProd);
         if (hasPrice) {
@@ -1243,7 +1293,15 @@
       })
       .then(() => {
         renderProds();
-        toast(pendingProduccion ? 'Producto guardado' : 'Precio de venta guardado');
+        // Paso 2 del flujo "Guardar y ponerle precio": la receta ya quedó guardada,
+        // ahora llevamos al usuario a la calculadora a ponerle el precio de venta.
+        if (produccion && continueToPrice) {
+          precioTargetProductId = savedProductId;
+          Costito.usarComoCosto(produccion); // carga costo + salta a calc + muestra el cartel
+          toast('Guardado. Ahora ponele el precio de venta 👇');
+        } else {
+          toast(produccion ? 'Producto guardado' : 'Precio de venta guardado');
+        }
       })
       .catch((err) => toast('Error al guardar: ' + err.message))
       .finally(() => { btn.disabled = false; });
@@ -1442,6 +1500,7 @@
     }
     pendingProduccion = costoTotal;
     pendingRecipeData = recipeData || null;
+    pendingProduccionContinue = false; // "guardar sin precio" por defecto
     pendingCalcResult = null;
     pendingServicio = null;
     $('modalNombre').value = '';
@@ -1454,6 +1513,17 @@
     const mh = $('modalHint'); if (mh) mh.textContent = 'Ingresá el nombre del producto. Desde "Mis productos" podés agregarle precios de venta después.';
     $('saveOverlay').classList.add('on');
     setTimeout(() => $('modalNombre').focus(), 60);
+  };
+
+  // Paso 1 del flujo continuo: guarda la receta+costo y, al confirmar el nombre,
+  // encadena automáticamente al paso 2 (poner el precio en la calculadora).
+  window.Costito.guardarYponerPrecioProduccion = function (costoTotal, recipeData) {
+    window.Costito.abrirGuardarProduccion(costoTotal, recipeData);
+    // Solo si el modal se abrió (usuario logueado y bajo el límite)
+    if (!$('saveOverlay').classList.contains('on')) return;
+    pendingProduccionContinue = true;
+    const th = $('modalTitle'); if (th) th.textContent = '¿Cómo se llama el producto?';
+    const mh = $('modalHint'); if (mh) mh.textContent = 'Lo guardamos y te llevamos a ponerle el precio de venta.';
   };
 
   // ============================================================
