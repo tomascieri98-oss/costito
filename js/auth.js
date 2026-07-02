@@ -538,6 +538,7 @@ window.CostitoAuth = (function () {
     Auth.signInWithEmail(email, pass, mode)
       .then((u) => {
         closeModal();
+        if (mode === 'signup') window.fbtrack('CompleteRegistration');
         toast(mode === 'signup' ? '¡Cuenta creada! Bienvenido 🟢' : '¡Hola de nuevo, ' + u.name + '!');
       })
       .catch((err) => { $('authError').textContent = err.message; })

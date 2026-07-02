@@ -132,6 +132,7 @@
     b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
     window.scrollTo({ top: 0, behavior: 'smooth' });
     showHelpBanner(b.dataset.tab);
+    window.fbtrack('PageView');
   });
 
   // ============================================================
