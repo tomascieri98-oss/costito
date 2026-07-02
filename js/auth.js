@@ -283,7 +283,147 @@ window.CostitoAuth = (function () {
       .then(({ error }) => { if (error) throw new Error(error.message); });
   }
 
-  return { getUser, onChange, signInWithEmail, signInWithGoogle, signOut, resetPassword, loadProducts, saveProduct, savePrecio, deletePrecio, deleteProduct, updateProduct, loadInsumos, upsertInsumo, deleteInsumo };
+  /* ---------- CLIENTES ---------- */
+  function loadClientes() {
+    if (!currentUser) return Promise.resolve([]);
+    return sb.from('clientes').select('id, nombre, contacto, created_at')
+      .eq('user_id', currentUser.id).order('nombre', { ascending: true })
+      .then(({ data, error }) => {
+        if (error) throw new Error(error.message);
+        return (data || []).map((r) => ({ id: r.id, nombre: r.nombre, contacto: r.contacto || '', createdAt: r.created_at }));
+      });
+  }
+  function saveCliente({ nombre, contacto }) {
+    if (!currentUser) return Promise.reject(new Error('No hay sesión activa.'));
+    return sb.from('clientes').insert({ user_id: currentUser.id, nombre: nombre || '', contacto: contacto || '' })
+      .select('id').single().then(({ data, error }) => { if (error) throw new Error(error.message); return data.id; });
+  }
+  function updateCliente(id, { nombre, contacto }) {
+    if (!currentUser) return Promise.reject(new Error('No hay sesión activa.'));
+    return sb.from('clientes').update({ nombre: nombre || '', contacto: contacto || '' })
+      .eq('id', id).eq('user_id', currentUser.id).then(({ error }) => { if (error) throw new Error(error.message); });
+  }
+  function deleteCliente(id) {
+    if (!currentUser) return Promise.reject(new Error('No hay sesión activa.'));
+    return sb.from('clientes').delete().eq('id', id).eq('user_id', currentUser.id)
+      .then(({ error }) => { if (error) throw new Error(error.message); });
+  }
+
+  /* ---------- PRESUPUESTOS ---------- */
+  function loadPresupuestos() {
+    if (!currentUser) return Promise.resolve([]);
+    return sb.from('presupuestos')
+      .select('id, cliente_id, titulo, estado, total, sena_requerida, link_publico_token, notas, created_at, aceptado_at, clientes(nombre)')
+      .eq('user_id', currentUser.id).order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) throw new Error(error.message);
+        return (data || []).map((r) => ({
+          id: r.id, clienteId: r.cliente_id, titulo: r.titulo, estado: r.estado,
+          total: r.total || 0, senaRequerida: r.sena_requerida || 0,
+          token: r.link_publico_token, notas: r.notas || '',
+          createdAt: r.created_at, aceptadoAt: r.aceptado_at,
+          clienteNombre: r.clientes ? r.clientes.nombre : null,
+        }));
+      });
+  }
+  function savePresupuesto({ clienteId, titulo, notas, senaRequerida }) {
+    if (!currentUser) return Promise.reject(new Error('No hay sesión activa.'));
+    return sb.from('presupuestos').insert({
+      user_id: currentUser.id, cliente_id: clienteId || null,
+      titulo: titulo || 'Nuevo presupuesto', notas: notas || '',
+      sena_requerida: senaRequerida || 0,
+    }).select('id, link_publico_token').single()
+      .then(({ data, error }) => { if (error) throw new Error(error.message); return { id: data.id, token: data.link_publico_token }; });
+  }
+  function updatePresupuesto(id, fields) {
+    if (!currentUser) return Promise.reject(new Error('No hay sesión activa.'));
+    const row = {};
+    if (fields.titulo !== undefined)       row.titulo = fields.titulo;
+    if (fields.clienteId !== undefined)    row.cliente_id = fields.clienteId;
+    if (fields.estado !== undefined)       row.estado = fields.estado;
+    if (fields.notas !== undefined)        row.notas = fields.notas;
+    if (fields.total !== undefined)        row.total = fields.total;
+    if (fields.senaRequerida !== undefined) row.sena_requerida = fields.senaRequerida;
+    return sb.from('presupuestos').update(row).eq('id', id).eq('user_id', currentUser.id)
+      .then(({ error }) => { if (error) throw new Error(error.message); });
+  }
+  function deletePresupuesto(id) {
+    if (!currentUser) return Promise.reject(new Error('No hay sesión activa.'));
+    return sb.from('presupuestos').delete().eq('id', id).eq('user_id', currentUser.id)
+      .then(({ error }) => { if (error) throw new Error(error.message); });
+  }
+
+  /* ---------- PRESUPUESTO ITEMS ---------- */
+  function loadPresupuestoItems(presupuestoId) {
+    return sb.from('presupuesto_items')
+      .select('id, descripcion, origen, origen_ref_id, cantidad, monto_unitario, created_at')
+      .eq('presupuesto_id', presupuestoId).order('created_at', { ascending: true })
+      .then(({ data, error }) => {
+        if (error) throw new Error(error.message);
+        return (data || []).map((r) => ({
+          id: r.id, descripcion: r.descripcion, origen: r.origen,
+          origenRefId: r.origen_ref_id, cantidad: r.cantidad || 1,
+          montoUnitario: r.monto_unitario || 0, createdAt: r.created_at,
+        }));
+      });
+  }
+  function savePresupuestoItem(presupuestoId, { descripcion, origen, origenRefId, cantidad, montoUnitario }) {
+    return sb.from('presupuesto_items').insert({
+      presupuesto_id: presupuestoId, descripcion: descripcion || '',
+      origen: origen || 'manual', origen_ref_id: origenRefId || null,
+      cantidad: cantidad || 1, monto_unitario: montoUnitario || 0,
+    }).select('id').single()
+      .then(({ data, error }) => { if (error) throw new Error(error.message); return data.id; });
+  }
+  function updatePresupuestoItem(id, { descripcion, cantidad, montoUnitario }) {
+    const row = {};
+    if (descripcion !== undefined)    row.descripcion = descripcion;
+    if (cantidad !== undefined)       row.cantidad = cantidad;
+    if (montoUnitario !== undefined)  row.monto_unitario = montoUnitario;
+    return sb.from('presupuesto_items').update(row).eq('id', id)
+      .then(({ error }) => { if (error) throw new Error(error.message); });
+  }
+  function deletePresupuestoItem(id) {
+    return sb.from('presupuesto_items').delete().eq('id', id)
+      .then(({ error }) => { if (error) throw new Error(error.message); });
+  }
+
+  /* ---------- PÁGINA PÚBLICA ---------- */
+  function getPresupuestoPublico(token) {
+    return sb.from('presupuestos')
+      .select('id, titulo, estado, total, sena_requerida, notas, created_at, aceptado_at, link_publico_token, clientes(nombre, contacto)')
+      .eq('link_publico_token', token).single()
+      .then(({ data, error }) => {
+        if (error) throw new Error(error.message);
+        return {
+          id: data.id, titulo: data.titulo, estado: data.estado,
+          total: data.total || 0, senaRequerida: data.sena_requerida || 0,
+          notas: data.notas || '', token: data.link_publico_token,
+          createdAt: data.created_at, aceptadoAt: data.aceptado_at,
+          clienteNombre: data.clientes ? data.clientes.nombre : null,
+          clienteContacto: data.clientes ? data.clientes.contacto : null,
+        };
+      });
+  }
+  function getItemsPublicos(presupuestoId) {
+    return sb.from('presupuesto_items')
+      .select('id, descripcion, cantidad, monto_unitario, origen')
+      .eq('presupuesto_id', presupuestoId).order('created_at', { ascending: true })
+      .then(({ data, error }) => {
+        if (error) throw new Error(error.message);
+        return (data || []).map((r) => ({ id: r.id, descripcion: r.descripcion, cantidad: r.cantidad || 1, montoUnitario: r.monto_unitario || 0, origen: r.origen }));
+      });
+  }
+  function aceptarPresupuesto(token) {
+    return sb.rpc('accept_presupuesto', { p_token: token })
+      .then(({ data, error }) => {
+        if (error) throw new Error(error.message);
+        if (!data || !data.ok) throw new Error(data ? data.error : 'Error desconocido');
+        return data;
+      });
+  }
+
+  return { getUser, onChange, signInWithEmail, signInWithGoogle, signOut, resetPassword, loadProducts, saveProduct, savePrecio, deletePrecio, deleteProduct, updateProduct, loadInsumos, upsertInsumo, deleteInsumo, loadClientes, saveCliente, updateCliente, deleteCliente, loadPresupuestos, savePresupuesto, updatePresupuesto, deletePresupuesto, loadPresupuestoItems, savePresupuestoItem, updatePresupuestoItem, deletePresupuestoItem, getPresupuestoPublico, getItemsPublicos, aceptarPresupuesto };
 })();
 
 /* ---------- 3) WIRING DE LA UI ---------- */

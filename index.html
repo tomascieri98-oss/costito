@@ -105,6 +105,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <button class="tab tab-accent" data-tab="prod">Mis productos</button>
         </div>
       </div>
+      <div class="tab-divider"></div>
+      <div class="tab-group">
+        <span class="tab-group-label">Presupuestos</span>
+        <div class="tab-group-inner">
+          <button class="tab" data-tab="presupuestos">Presupuestos</button>
+          <button class="tab" data-tab="clientes">Clientes</button>
+        </div>
+      </div>
     </div>
   </div>
 </nav>
@@ -455,6 +463,134 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div id="body-produccion"></div>
   </section>
 
+  <!-- ============ PRESUPUESTOS ============ -->
+  <section class="panel" id="presupuestos">
+    <h2 class="section-title">Presupuestos</h2>
+    <p class="section-sub">Armá y enviá presupuestos a tus clientes. Cada uno tiene su link público para que lo vean y lo acepten en un toque.</p>
+
+    <!-- LISTA -->
+    <div id="ppto-lista-wrap">
+      <div class="ppto-list" id="ppto-list"></div>
+      <button class="ppto-new-btn" id="ppto-new-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Nuevo presupuesto
+      </button>
+    </div>
+
+    <!-- BUILDER (oculto hasta que se abre un presupuesto) -->
+    <div id="ppto-builder" style="display:none">
+      <div class="ppto-builder-head">
+        <button class="ppto-back" id="ppto-back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Volver
+        </button>
+        <h3 class="ppto-builder-titulo" id="ppto-builder-titulo" title="Hacé click para editar el título"></h3>
+      </div>
+
+      <div class="card ppto-meta-card">
+        <div class="field">
+          <label>Cliente</label>
+          <div class="in sel"><select id="ppto-cliente-sel"><option value="">Sin cliente</option></select></div>
+        </div>
+        <div class="field">
+          <label>Estado</label>
+          <div class="in sel">
+            <select id="ppto-estado-sel">
+              <option value="borrador">Borrador</option>
+              <option value="enviado">Enviado</option>
+              <option value="aceptado">Aceptado</option>
+              <option value="rechazado">Rechazado</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Notas / condiciones</label>
+          <textarea id="ppto-notas-in" class="ppto-notas" placeholder="Ej: Validez 15 días. Seña del 30%." rows="3"></textarea>
+        </div>
+      </div>
+
+      <!-- Ítems -->
+      <div class="card ppto-items-card">
+        <h4 class="ppto-items-title">Ítems</h4>
+        <table class="ppto-items-tbl">
+          <thead>
+            <tr>
+              <th>Descripción</th>
+              <th>Cant.</th>
+              <th>Precio unit.</th>
+              <th>Subtotal</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="ppto-items-body"></tbody>
+        </table>
+
+        <form class="ppto-add-item-form" id="ppto-add-item-form">
+          <input type="text" id="ppto-add-desc" placeholder="Descripción del ítem" maxlength="120" class="ppto-add-desc" />
+          <input type="number" id="ppto-add-cant" value="1" min="1" step="1" class="ppto-add-cant" />
+          <div class="in" style="flex:1;min-width:100px"><span class="pre">$</span><input type="text" id="ppto-add-monto" placeholder="0" inputmode="numeric" /></div>
+          <button type="submit" class="ppto-add-item-btn" id="ppto-add-item-btn">Agregar</button>
+        </form>
+
+        <div class="ppto-totales">
+          <div class="ppto-totales-row">
+            <span>Total</span>
+            <b id="ppto-total-val">$ 0</b>
+          </div>
+          <div class="ppto-totales-row ppto-sena-row">
+            <span>Seña requerida</span>
+            <span id="ppto-sena-val">—</span>
+          </div>
+          <div class="ppto-sena-input-row">
+            <label class="ppto-sena-lbl">Seña</label>
+            <div class="in" style="max-width:160px"><span class="pre">$</span><input type="text" id="ppto-sena-in" placeholder="0" inputmode="numeric" /></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Link público -->
+      <div class="card ppto-link-card" id="ppto-link-wrap" style="display:none">
+        <div class="ppto-link-head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Link público del presupuesto
+        </div>
+        <div class="ppto-link-row">
+          <input type="text" id="ppto-link-in" readonly class="ppto-link-in" />
+          <button class="ppto-copy-link" id="ppto-copy-link">Copiar</button>
+        </div>
+        <button class="ppto-wa-builder" id="ppto-wa-builder">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.116.554 4.104 1.523 5.827L.057 23.885a.5.5 0 0 0 .606.61l6.199-1.625A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.794 9.794 0 0 1-4.98-1.362l-.356-.212-3.696.968.986-3.594-.232-.37A9.793 9.793 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+          Enviar por WhatsApp
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CLIENTES ============ -->
+  <section class="panel" id="clientes">
+    <h2 class="section-title">Clientes</h2>
+    <p class="section-sub">Guardá los datos de tus clientes para asignarlos a los presupuestos rápidamente.</p>
+
+    <div class="card">
+      <form id="cli-form" class="cli-form">
+        <div class="field">
+          <label>Nombre</label>
+          <div class="in"><input type="text" id="cli-nombre-in" placeholder="Ej: María García" maxlength="80" /></div>
+        </div>
+        <div class="field">
+          <label>Contacto <span class="cli-opt">(WhatsApp, email, Instagram…)</span></label>
+          <div class="in"><input type="text" id="cli-contacto-in" placeholder="Ej: 11 1234-5678" maxlength="120" /></div>
+        </div>
+        <div class="cli-form-actions">
+          <button type="submit" class="btn-prim-modal" id="cli-save-btn">Agregar cliente</button>
+          <button type="button" class="cli-cancel" id="cli-cancel-btn" style="display:none">Cancelar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="cli-list" id="cli-list"></div>
+  </section>
+
   <!-- Sello Operon (marca de autor, sutil) -->
   <footer class="app-foot">
     <a class="operon-badge" href="https://operonhub.com/" target="_blank" rel="noopener" aria-label="Un producto de Operon">
@@ -570,6 +706,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="js/import.js?v=20260629"></script>
 <script src="js/negocio.js?v=20260629"></script>
 <script src="js/produccion.js?v=20260629"></script>
+<script src="js/clientes.js?v=20260702"></script>
+<script src="js/presupuestos.js?v=20260702"></script>
 
 <script defer src="/_vercel/insights/script.js"></script>
 </body>

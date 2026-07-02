@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es-AR" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Presupuesto — Costito</title>
+<meta name="robots" content="noindex,nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" />
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+<link rel="stylesheet" href="css/styles.css?v=20260702" />
+<style>
+.pub-wrap{max-width:640px;margin:0 auto;padding:24px 16px 60px}
+.pub-header{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.pub-logo{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-size:18px;font-weight:700;color:var(--verde);text-decoration:none}
+.pub-logo svg{width:24px;height:24px}
+.pub-estado{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:8px}
+.pub-titulo{font-family:var(--serif);font-size:26px;font-weight:700;color:var(--tinta);margin-bottom:6px}
+.pub-meta{font-size:13px;color:var(--tinta-soft);display:flex;flex-direction:column;gap:3px;margin-bottom:20px}
+.pub-card{background:var(--papel);border:1.5px solid var(--linea);border-radius:16px;padding:20px;margin-bottom:16px}
+.pub-items-tbl{width:100%;border-collapse:collapse;margin-bottom:12px}
+.pub-items-tbl th{font-size:11.5px;font-weight:600;color:var(--tinta-soft);text-transform:uppercase;
+  letter-spacing:.04em;padding:0 6px 8px;text-align:left}
+.pub-items-tbl td{padding:9px 6px;border-top:1px solid var(--linea);font-size:14px;vertical-align:top}
+.pub-it-desc{width:55%}
+.pub-it-cant,.pub-it-monto,.pub-it-sub{text-align:right;white-space:nowrap}
+.pub-it-sub{font-weight:600}
+.pub-totales{border-top:2px solid var(--linea);padding-top:12px;margin-top:4px}
+.pub-total-row{display:flex;justify-content:space-between;align-items:center;font-size:14px;margin-bottom:6px}
+.pub-total-row.main{margin-top:8px}
+.pub-total-row.main span{font-weight:700;font-size:15px}
+.pub-total-row.main b{font-family:var(--serif);font-size:22px;color:var(--verde)}
+.pub-sena-row{color:var(--tinta-soft);font-size:13px}
+.pub-notas{font-size:13.5px;color:var(--tinta-soft);line-height:1.6;white-space:pre-wrap}
+.pub-notas-title{font-size:12px;font-weight:700;color:var(--tinta-soft);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.pub-accept-btn{width:100%;background:var(--verde);color:var(--on-verde);border:none;
+  border-radius:14px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;
+  font-family:var(--sans);margin-bottom:12px;transition:.18s;display:flex;align-items:center;justify-content:center;gap:8px}
+.pub-accept-btn:hover{filter:brightness(1.08)}
+.pub-accept-btn:disabled{opacity:.5;cursor:not-allowed}
+.pub-accept-done{text-align:center;padding:24px;background:var(--crema);border-radius:14px;margin-bottom:16px}
+.pub-accept-done-ico{font-size:40px;margin-bottom:10px}
+.pub-accept-done h3{font-family:var(--serif);font-size:22px;color:var(--verde);margin-bottom:6px}
+.pub-accept-done p{font-size:14px;color:var(--tinta-soft)}
+.pub-loading{text-align:center;padding:60px 16px;color:var(--tinta-soft);font-size:15px}
+.pub-error{text-align:center;padding:60px 16px}
+.pub-error h2{font-family:var(--serif);font-size:22px;color:var(--tinta);margin-bottom:8px}
+.pub-error p{font-size:14px;color:var(--tinta-soft)}
+.pub-badge{font-size:12px;font-weight:700;padding:4px 12px;border-radius:100px}
+.pub-badge-borrador{background:var(--crema-2);color:var(--tinta-soft)}
+.pub-badge-enviado{background:#e8f4fd;color:#2563eb}
+.pub-badge-aceptado{background:#e8f8ef;color:var(--verde)}
+.pub-badge-rechazado{background:#fff0ee;color:var(--naranja)}
+[data-theme="dark"] .pub-badge-enviado{background:#1e3a5f;color:#93c5fd}
+[data-theme="dark"] .pub-badge-aceptado{background:#1a3326;color:var(--ok)}
+</style>
+</head>
+<body>
+<div class="pub-wrap" id="pub-wrap">
+  <div class="pub-loading" id="pub-loading">Cargando presupuesto…</div>
+  <div id="pub-content" style="display:none"></div>
+  <div id="pub-error" style="display:none">
+    <div class="pub-error">
+      <h2>Presupuesto no encontrado</h2>
+      <p>El link puede ser inválido o el presupuesto fue eliminado.</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+(async function () {
+  const SUPABASE_URL = 'https://pedpqmrxzftddvgfwlxx.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_8boyR6fKSt7suaWyF038tw_heNNiiD1';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  const loading = document.getElementById('pub-loading');
+  const content = document.getElementById('pub-content');
+  const error = document.getElementById('pub-error');
+
+  function fmt(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function formatARS(n) {
+    const num = Number(n) || 0;
+    return '$ ' + num.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+  function formatFecha(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  if (!token) { loading.style.display = 'none'; error.style.display = ''; return; }
+
+  let ppto, items;
+  try {
+    const { data: p, error: e1 } = await sb.from('presupuestos')
+      .select('id, titulo, estado, total, sena_requerida, notas, created_at, aceptado_at, link_publico_token, clientes(nombre, contacto)')
+      .eq('link_publico_token', token).single();
+    if (e1 || !p) throw new Error('not found');
+    ppto = p;
+
+    const { data: its, error: e2 } = await sb.from('presupuesto_items')
+      .select('id, descripcion, cantidad, monto_unitario')
+      .eq('presupuesto_id', p.id).order('created_at', { ascending: true });
+    items = its || [];
+  } catch (err) {
+    loading.style.display = 'none';
+    error.style.display = '';
+    return;
+  }
+
+  const estadoLabels = { borrador: 'Borrador', enviado: 'Enviado', aceptado: 'Aceptado', rechazado: 'Rechazado' };
+  const clienteNombre = ppto.clientes ? ppto.clientes.nombre : null;
+  const isAceptado = ppto.estado === 'aceptado';
+
+  function renderItemsRows() {
+    if (!items.length) return '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--tinta-soft);font-size:13px">Sin ítems</td></tr>';
+    return items.map((it) => `
+      <tr>
+        <td class="pub-it-desc">${fmt(it.descripcion)}</td>
+        <td class="pub-it-cant">${it.cantidad}</td>
+        <td class="pub-it-monto">${formatARS(it.monto_unitario)}</td>
+        <td class="pub-it-sub">${formatARS((it.monto_unitario || 0) * (it.cantidad || 1))}</td>
+      </tr>
+    `).join('');
+  }
+
+  const sena = ppto.sena_requerida || 0;
+
+  content.innerHTML = `
+    <div class="pub-header">
+      <a class="pub-logo" href="/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/><path d="M13 13h4M13 16.5h4"/></svg>
+        Costito
+      </a>
+    </div>
+
+    <div class="pub-estado">
+      <div></div>
+      <span class="pub-badge pub-badge-${fmt(ppto.estado)}">${fmt(estadoLabels[ppto.estado] || ppto.estado)}</span>
+    </div>
+
+    <h1 class="pub-titulo">${fmt(ppto.titulo)}</h1>
+
+    <div class="pub-meta">
+      ${clienteNombre ? `<span>Para: <b>${fmt(clienteNombre)}</b></span>` : ''}
+      <span>Fecha: ${formatFecha(ppto.created_at)}</span>
+      ${isAceptado && ppto.aceptado_at ? `<span>Aceptado el: ${formatFecha(ppto.aceptado_at)}</span>` : ''}
+    </div>
+
+    <div class="pub-card">
+      <table class="pub-items-tbl">
+        <thead>
+          <tr>
+            <th>Descripción</th>
+            <th style="text-align:right">Cant.</th>
+            <th style="text-align:right">Precio</th>
+            <th style="text-align:right">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>${renderItemsRows()}</tbody>
+      </table>
+      <div class="pub-totales">
+        ${sena > 0 ? `<div class="pub-total-row pub-sena-row"><span>Seña requerida</span><span>${formatARS(sena)}</span></div>` : ''}
+        <div class="pub-total-row main"><span>Total</span><b>${formatARS(ppto.total)}</b></div>
+      </div>
+    </div>
+
+    ${ppto.notas ? `<div class="pub-card"><div class="pub-notas-title">Condiciones</div><p class="pub-notas">${fmt(ppto.notas)}</p></div>` : ''}
+
+    <div id="pub-accept-area">
+      ${isAceptado
+        ? `<div class="pub-accept-done"><div class="pub-accept-done-ico">✅</div><h3>Presupuesto aceptado</h3><p>Gracias por confirmar. Nos ponemos en contacto a la brevedad.</p></div>`
+        : ppto.estado === 'enviado'
+          ? `<button class="pub-accept-btn" id="pub-accept-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M20 6L9 17l-5-5"/></svg>Aceptar presupuesto</button>`
+          : ''}
+    </div>
+  `;
+
+  loading.style.display = 'none';
+  content.style.display = '';
+
+  const acceptBtn = document.getElementById('pub-accept-btn');
+  if (acceptBtn) {
+    acceptBtn.addEventListener('click', async () => {
+      acceptBtn.disabled = true;
+      acceptBtn.textContent = 'Procesando…';
+      try {
+        const { data, error: rpcErr } = await sb.rpc('accept_presupuesto', { p_token: token });
+        if (rpcErr || !data || !data.ok) throw new Error(rpcErr ? rpcErr.message : (data && data.error) || 'Error');
+        document.getElementById('pub-accept-area').innerHTML = `
+          <div class="pub-accept-done">
+            <div class="pub-accept-done-ico">✅</div>
+            <h3>¡Presupuesto aceptado!</h3>
+            <p>Gracias por confirmar. Nos ponemos en contacto a la brevedad.</p>
+          </div>`;
+      } catch (err) {
+        acceptBtn.disabled = false;
+        acceptBtn.textContent = 'Aceptar presupuesto';
+        alert('Hubo un error al aceptar: ' + err.message);
+      }
+    });
+  }
+})();
+</script>
+</body>
+</html>
